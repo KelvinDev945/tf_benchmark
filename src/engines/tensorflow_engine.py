@@ -81,11 +81,7 @@ class TensorFlowEngine(BaseInferenceEngine):
             ModelLoadError: If model loading fails
         """
         try:
-            if isinstance(model_path, tf.keras.Model):
-                # Model object passed directly
-                self.model = model_path
-                print(f"✓ Loaded TensorFlow model from object")
-            elif isinstance(model_path, str):
+            if isinstance(model_path, str):
                 # Load from path
                 if os.path.isdir(model_path):
                     # SavedModel format
@@ -95,10 +91,16 @@ class TensorFlowEngine(BaseInferenceEngine):
                     # Try to load as Keras model
                     self.model = tf.keras.models.load_model(model_path)
                     print(f"✓ Loaded Keras model from {model_path}")
+            elif hasattr(model_path, '__call__') and hasattr(model_path, 'predict'):
+                # Model object passed directly (Keras or HuggingFace Transformers)
+                # Accept any callable TensorFlow model with predict method
+                self.model = model_path
+                model_type = type(model_path).__name__
+                print(f"✓ Loaded TensorFlow model from object ({model_type})")
             else:
                 raise ModelLoadError(
-                    f"Invalid model_path type: {type(model_path)}. "
-                    "Expected str or tf.keras.Model"
+                    f"Invalid model_path type: {type(model_path).__name__}. "
+                    "Expected str or callable model with predict method"
                 )
 
             self.is_loaded = True
