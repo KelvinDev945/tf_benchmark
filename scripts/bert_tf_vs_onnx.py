@@ -359,9 +359,12 @@ def main():
 
             bert_outputs = bert_layer(bert_inputs)
             pooled_output = bert_outputs["pooled_output"]
-            output = tf.keras.layers.Dense(2, activation='softmax')(pooled_output)
+            output = tf.keras.layers.Dense(2, activation='softmax', name='classifier')(pooled_output)
 
             model = tf.keras.Model(inputs=[input_word_ids, input_mask, input_type_ids], outputs=output)
+
+            # Compile the model to avoid KerasTensor issues
+            model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
             print("✓ BERT 模型构建完成")
             print(f"  参数总数: {model.count_params():,}")

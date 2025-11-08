@@ -30,8 +30,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Update pip, setuptools, and wheel
-RUN python3.11 -m pip install --no-cache-dir --upgrade pip setuptools wheel
+# Install uv - ultra-fast Python package installer
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
+    echo 'export PATH="/root/.local/bin:$PATH"' >> /root/.bashrc
+
+# Add uv to PATH for the current build
+ENV PATH="/root/.local/bin:$PATH"
 
 # Set python3.11 as default python3
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
@@ -43,23 +47,25 @@ WORKDIR /app
 # Copy requirements file
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip3 install --no-cache-dir -r requirements.txt
+# Install Python dependencies using uv (much faster than pip)
+RUN uv pip install --system -r requirements.txt
 
 # Install architecture-specific packages
 ARG TARGETARCH
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
         echo "Installing OpenVINO for x86_64..." && \
-        pip3 install --no-cache-dir --no-deps openvino==2023.2.0 && \
-        pip3 install --no-cache-dir --no-deps openvino-dev==2023.2.0 && \
-        pip3 install --no-cache-dir openvino==2023.2.0 openvino-dev==2023.2.0; \
+        uv pip install --system --no-deps openvino==2023.2.0 && \
+        uv pip install --system --no-deps openvino-dev==2023.2.0 && \
+        uv pip install --system openvino==2023.2.0 openvino-dev==2023.2.0; \
     else \
         echo "Skipping OpenVINO (ARM64 not supported)"; \
     fi
 
 # Install TFLite runtime (without upgrading dependencies)
-RUN pip3 install --no-cache-dir --no-deps --extra-index-url https://google-coral.github.io/py-repo/ tflite_runtime || \
-    pip3 install --no-cache-dir --extra-index-url https://google-coral.github.io/py-repo/ tflite_runtime
+# Note: tflite_runtime may not be available for Python 3.11, so we allow it to fail
+RUN uv pip install --system --no-deps --extra-index-url https://google-coral.github.io/py-repo/ tflite_runtime || \
+    uv pip install --system --extra-index-url https://google-coral.github.io/py-repo/ tflite_runtime || \
+    echo "Warning: tflite_runtime not available for Python 3.11, will use TensorFlow Lite from TensorFlow"
 
 # Create necessary directories
 RUN mkdir -p /app/src /app/configs /app/results /app/models /app/data
@@ -74,8 +80,7 @@ RUN chmod -R 755 /app
 # Verify installations
 RUN python3 -c "import tensorflow as tf; print(f'TensorFlow version: {tf.__version__}')" && \
     python3 -c "import onnxruntime as ort; print(f'ONNX Runtime version: {ort.__version__}')" && \
-    python3 -c "import transformers; print(f'Transformers version: {transformers.__version__}')" && \
-    python3 -c "import datasets; print(f'Datasets version: {datasets.__version__}')"
+    python3 -c "import tensorflow_hub as hub; print(f'TensorFlow Hub version: {hub.__version__}')"
 
 # Verify OpenVINO (x86_64 only)
 RUN if [ "$TARGETARCH" = "amd64" ]; then \

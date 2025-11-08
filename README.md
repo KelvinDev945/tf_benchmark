@@ -90,6 +90,29 @@ docker run --rm -v $(pwd)/results:/app/results \
 open results/latest/report/report.html
 ```
 
+### ⚡ Docker with uv (Optimized - 2-3x Faster Build)
+
+**NEW**: Docker image optimized with [uv](https://github.com/astral-sh/uv) package manager for ultra-fast builds!
+
+```bash
+# Build optimized Docker image with uv
+docker build -t tf-cpu-benchmark:uv -f docker/Dockerfile .
+
+# Run quick environment test
+docker run --rm -v $(pwd)/results:/app/results -v $(pwd)/scripts:/app/scripts \
+    tf-cpu-benchmark:uv scripts/test_docker_env.py
+
+# View test results
+cat results/docker_uv_test/mobilenet_v2_results.json
+```
+
+**Performance**:
+- Build time: ~1-2 minutes (vs 3-5 minutes with pip) - **2-3x faster** ⚡
+- Package installation: ~25 seconds (vs 60-120 seconds) - **up to 5x faster**
+- MobileNetV2 inference: 85.8ms latency, 11.66 samples/sec
+
+See [DOCKER_UV_TEST_RESULTS.md](DOCKER_UV_TEST_RESULTS.md) for detailed benchmarks.
+
 ## 📦 Installation
 
 ### Option 1: Docker (Recommended)
