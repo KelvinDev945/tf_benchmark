@@ -1,0 +1,152 @@
+# TensorFlow Multi-Engine CPU Inference Benchmark
+# Git Ignore File
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# PyCharm
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Benchmark Results
+results/
+*.log
+
+# Data and Models
+data/
+models/
+*.h5
+*.pb
+*.onnx
+*.xml
+*.bin
+*.tflite
+
+# HuggingFace Cache
+.cache/
+huggingface/
+transformers/
+
+# Checkpoints
+checkpoint.json
+*.ckpt
+
+# Reports
+report/
+*.html
+plots/
+*.png
+*.svg
+*.pdf
+
+# Temporary Files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log.*
+
+# System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Desktop.ini
+$RECYCLE.BIN/
+
+# Docker
+.dockerignore
+
+# Compiled source
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Archives
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Node modules (if any)
+node_modules/
+package-lock.json
+
+# Keep structure
+!results/.gitkeep
+!data/.gitkeep
+!models/.gitkeep
+!logs/.gitkeep

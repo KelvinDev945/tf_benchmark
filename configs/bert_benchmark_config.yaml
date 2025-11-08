@@ -1,0 +1,247 @@
+# BERT Model Inference Benchmark Configuration
+# Optimized for BERT base and quantized model comparison
+
+# Benchmark execution parameters
+benchmark:
+  # Number of warmup iterations before actual testing
+  warmup_iterations: 30
+
+  # Number of test iterations for measurement
+  test_iterations: 100
+
+  # Number of times to repeat the entire benchmark (take median)
+  repeat_runs: 3
+
+  # Confidence level for statistical intervals
+  confidence_level: 0.95
+
+  # Enable detailed logging
+  verbose: true
+
+  # Save intermediate checkpoints
+  enable_checkpoints: true
+
+  # Checkpoint save interval (number of completed tests)
+  checkpoint_interval: 5
+
+# Dataset configuration
+dataset:
+  # Text dataset settings
+  text:
+    # HuggingFace dataset name
+    name: "glue"
+
+    # Subset/task name
+    subset: "sst2"
+
+    # Dataset split to use
+    split: "validation"
+
+    # Number of samples to use
+    num_samples: 500
+
+    # Enable caching
+    cache: true
+
+    # Cache directory
+    cache_dir: "./data/cache/glue"
+
+# Models to benchmark
+models:
+  # Text understanding models (BERT family)
+  text:
+    - bert-base-uncased
+    - distilbert-base-uncased
+
+# Batch sizes to test
+batch_sizes: [1, 4, 8]
+
+# Sequence lengths for text models
+sequence_lengths: [128, 256, 512]
+
+# Inference engines and their configurations
+engines:
+  # TensorFlow configurations (Base Model)
+  tensorflow:
+    enabled: true
+    configs:
+      # Baseline: default TensorFlow settings
+      - name: baseline
+        description: "Default TensorFlow configuration (Base Model)"
+        xla: false
+        mixed_precision: false
+        inter_op_threads: null  # Auto-detect
+        intra_op_threads: null  # Auto-detect
+
+      # XLA: Enable XLA JIT compilation
+      - name: xla
+        description: "TensorFlow with XLA JIT compilation"
+        xla: true
+        mixed_precision: false
+        inter_op_threads: null
+        intra_op_threads: null
+
+  # TFLite configurations (Quantized Models)
+  tflite:
+    enabled: true
+    configs:
+      # INT8: Full integer quantization (Most compressed)
+      - name: int8
+        description: "TFLite with full INT8 quantization"
+        optimization: "INT8"
+        num_threads: 4
+        calibration_samples: 100
+
+      # Float16: Half precision quantization
+      - name: float16
+        description: "TFLite with Float16 quantization"
+        optimization: "FLOAT16"
+        num_threads: 4
+
+      # Dynamic Range: Dynamic range quantization
+      - name: dynamic_range
+        description: "TFLite with dynamic range quantization"
+        optimization: "DYNAMIC_RANGE"
+        num_threads: 4
+
+  # ONNX Runtime configurations (ONNX Models)
+  onnxruntime:
+    enabled: true
+    configs:
+      # Default: Standard ONNX Runtime settings
+      - name: default
+        description: "ONNX Runtime with default settings"
+        graph_optimization_level: "ENABLE_BASIC"
+        inter_op_num_threads: null
+        intra_op_num_threads: null
+        execution_mode: "SEQUENTIAL"
+
+      # Optimized: Graph optimization + parallelism
+      - name: optimized
+        description: "ONNX Runtime with full optimizations"
+        graph_optimization_level: "ENABLE_ALL"
+        inter_op_num_threads: 4
+        intra_op_num_threads: 8
+        execution_mode: "PARALLEL"
+
+      # Quantized: INT8 quantization
+      - name: quantized
+        description: "ONNX Runtime with INT8 quantization"
+        graph_optimization_level: "ENABLE_ALL"
+        inter_op_num_threads: 4
+        intra_op_num_threads: 8
+        execution_mode: "PARALLEL"
+        quantize: true
+
+  # OpenVINO disabled for BERT (focus on TF, TFLite, ONNX)
+  openvino:
+    enabled: false
+
+# Output configuration
+output:
+  # Results directory
+  results_dir: "./results/bert_benchmark"
+
+  # Save results in CSV format
+  save_csv: true
+
+  # Save results in JSON format
+  save_json: true
+
+  # Generate plots
+  generate_plots: true
+
+  # Generate HTML report
+  generate_report: true
+
+  # Plot format
+  plot_format: "png"  # png, svg, or both
+
+  # Plot DPI
+  plot_dpi: 300
+
+  # Report template
+  report_template: "default"
+
+# Logging configuration
+logging:
+  # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  level: "INFO"
+
+  # Log to console
+  console: true
+
+  # Log to file
+  file: true
+
+  # Log file path
+  log_file: "./results/bert_benchmark/benchmark.log"
+
+  # Log format
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+  # Use colored logs
+  colored: true
+
+# Resource monitoring configuration
+monitoring:
+  # Enable resource monitoring
+  enabled: true
+
+  # Sampling interval in seconds
+  sampling_interval: 0.1
+
+  # Monitor CPU usage
+  monitor_cpu: true
+
+  # Monitor memory usage
+  monitor_memory: true
+
+  # Monitor per-core CPU usage
+  monitor_per_core: true
+
+# Model conversion configuration
+conversion:
+  # Directory to save converted models
+  model_dir: "./models/bert_converted"
+
+  # Keep intermediate files
+  keep_intermediate: true
+
+  # Verify conversion accuracy
+  verify_accuracy: true
+
+  # Maximum allowed accuracy loss (percentage)
+  max_accuracy_loss: 5.0
+
+  # Number of samples for verification
+  verification_samples: 100
+
+# Testing modes (can be selected via CLI)
+modes:
+  # Quick mode: Fast verification (for development)
+  quick:
+    warmup_iterations: 5
+    test_iterations: 20
+    repeat_runs: 1
+    batch_sizes: [1]
+    sequence_lengths: [128]
+    num_samples_text: 50
+
+  # Standard mode: Balanced testing (default)
+  standard:
+    warmup_iterations: 30
+    test_iterations: 100
+    repeat_runs: 3
+    batch_sizes: [1, 4, 8]
+    sequence_lengths: [128, 256]
+    num_samples_text: 500
+
+  # Full mode: Comprehensive testing (for publication)
+  full:
+    warmup_iterations: 50
+    test_iterations: 200
+    repeat_runs: 5
+    batch_sizes: [1, 4, 8, 16, 32]
+    sequence_lengths: [128, 256, 512]
+    num_samples_text: 1000

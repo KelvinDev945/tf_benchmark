@@ -1,0 +1,90 @@
+# TensorFlow Multi-Engine CPU Inference Benchmark
+# Python Dependencies
+
+# Core Deep Learning Frameworks
+tensorflow==2.20.0
+tensorflow-hub>=0.16.0
+tf-keras>=2.20.0
+
+# ONNX and ONNX Runtime
+onnx>=1.15.0
+onnxruntime>=1.16.0
+tf2onnx
+
+# HuggingFace Libraries
+transformers>=4.35.0
+datasets>=2.15.0
+tokenizers>=0.15.0
+
+# OpenVINO (installed conditionally in Dockerfile for x86_64 only)
+# openvino==2023.2.0
+# openvino-dev==2023.2.0
+
+# Numerical Computing
+numpy>=1.24.0
+scipy>=1.11.0
+
+# Data Processing and Analysis
+pandas>=2.0.0
+scikit-learn>=1.3.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.18.0
+kaleido>=0.2.1
+
+# Configuration Management
+pyyaml>=6.0
+python-dotenv>=1.0.0
+
+# System Monitoring
+psutil>=5.9.0
+py-cpuinfo>=9.0.0
+
+# Progress Bars and CLI
+tqdm>=4.66.0
+click>=8.1.0
+rich>=13.7.0
+
+# Templating (for report generation)
+jinja2>=3.1.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.5.0
+
+# Type Checking
+mypy>=1.7.0
+types-PyYAML>=6.0.0
+
+# Code Quality
+black>=23.12.0
+flake8>=6.1.0
+isort>=5.13.0
+
+# Logging
+coloredlogs>=15.0.1
+python-json-logger>=2.0.7
+
+# Utilities
+pillow>=10.1.0
+requests>=2.31.0
+urllib3>=2.1.0
+
+# Model Quantization Tools
+tensorflow-model-optimization>=0.7.5
+
+# Additional ONNX Tools
+onnx-simplifier>=0.4.35
+onnxoptimizer>=0.3.13
+
+# HDF5 Support
+h5py>=3.10.0
+
+# Protobuf (compatible version for TensorFlow)
+protobuf>=5.28.0
+
+# Network Analysis (optional)
+networkx>=3.2.0
