@@ -11,10 +11,12 @@ onnx>=1.15.0
 onnxruntime>=1.16.0
 tf2onnx
 
-# HuggingFace Libraries
-transformers>=4.35.0
-datasets>=2.15.0
-tokenizers>=0.15.0
+# HuggingFace Libraries (NOT REQUIRED - removed)
+# This project does not require HuggingFace libraries
+# The TensorFlow Engine supports any callable model with predict method
+# transformers>=4.35.0
+# datasets>=2.15.0
+# tokenizers>=0.15.0
 
 # OpenVINO (installed conditionally in Dockerfile for x86_64 only)
 # openvino==2023.2.0

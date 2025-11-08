@@ -2,6 +2,17 @@
 
 > Comprehensive performance comparison of TensorFlow, TFLite, ONNX Runtime, and OpenVINO on CPU architectures
 
+## ⚠️ 重要说明 / Important Note
+
+**本项目不需要 HuggingFace Transformers 库**
+
+This project does **NOT** require the HuggingFace `transformers` library. The TensorFlow Engine has been designed to support any callable TensorFlow model with a `predict` method, including:
+- ✅ Native Keras models (`tf.keras.Sequential`, `tf.keras.Model`)
+- ✅ TensorFlow SavedModel format
+- ✅ Any custom model implementing `__call__` and `predict`
+
+If you see references to BERT or Transformers models in the codebase, these are for **compatibility testing only** and are not required for the core functionality. The project focuses on benchmarking standard TensorFlow models using multiple inference engines.
+
 ## ✨ Features
 
 - 🚀 **Multi-Engine Support**: TensorFlow, TFLite, ONNX Runtime, and OpenVINO
