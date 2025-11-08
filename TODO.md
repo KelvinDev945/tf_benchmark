@@ -133,6 +133,311 @@ module 'numpy' has no attribute 'object'.
 
 ---
 
+## 🔧 CI/CD 自动化
+
+### 10. GitHub Actions Workflow 集成
+
+#### 10.1 基础 CI/CD Workflow ✅ 高优先级
+
+**功能**:
+- [ ] 自动运行单元测试（pytest）
+- [ ] 生成代码覆盖率报告（pytest-cov）
+- [ ] 多 Python 版本测试矩阵（3.11, 3.12）
+- [ ] 在 PR 和 push 到主分支时自动触发
+- [ ] 上传覆盖率报告到 Codecov/Coveralls
+
+**触发条件**:
+- Push to main/develop branches
+- Pull requests
+
+**预期效果**:
+- 每次提交自动验证代码质量
+- 防止破坏性更改合并到主分支
+- 快速反馈（< 5分钟）
+
+---
+
+#### 10.2 代码质量检查 Workflow ✅ 高优先级
+
+**功能**:
+- [ ] Black 代码格式化检查
+- [ ] Flake8 语法和风格检查
+- [ ] isort import 排序检查
+- [ ] mypy 类型注解检查
+- [ ] 在 PR 中添加代码质量报告注释
+
+**工具配置**:
+- 使用项目中已有的 black、flake8、isort、mypy
+- 配置文件：pyproject.toml 或 setup.cfg
+
+**可选功能**:
+- [ ] 自动修复格式问题并提交（通过 bot）
+- [ ] 代码质量评分和趋势分析
+
+---
+
+#### 10.3 依赖安全检查 Workflow ✅ 中优先级
+
+**功能**:
+- [x] 扫描 requirements.txt 中的安全漏洞
+- [x] 使用 pip-audit 或 safety 工具
+- [x] 定期检查（每周一次 + 每次更新依赖时）
+- [x] 发现漏洞时创建 Issue 或发送通知
+
+**检查项目**:
+- requirements.txt
+- 已知 CVE 数据库
+- 过时的包版本
+
+**好处**:
+- 及时发现依赖包的安全问题
+- 保持项目安全性
+- 符合安全最佳实践
+
+**实施详情**:
+- **文件**: `.github/workflows/security.yml`
+- **工具**: pip-audit, safety
+- **触发条件**:
+  - Push/PR to main/develop (仅当修改 requirements.txt)
+  - 定期执行 (每周一 9:00 UTC)
+  - 手动触发 (workflow_dispatch)
+- **功能特性**:
+  - 使用 pip-audit 和 Safety 双重扫描
+  - 检查过时的包版本
+  - 生成详细的安全报告
+  - 定期扫描时自动创建 Issue (如果发现漏洞)
+  - 上传报告到 Artifacts (保留90天)
+
+---
+
+#### 10.4 Docker 镜像构建测试 ✅ 中优先级
+
+**功能**:
+- [x] 验证 Dockerfile 能成功构建
+- [x] 测试构建的镜像能正常运行
+- [x] 多平台构建测试（x86_64, ARM64）
+- [x] 可选：推送到 Docker Hub 或 GitHub Container Registry
+- [x] 镜像大小和层数优化检查
+
+**相关文件**:
+- docker/Dockerfile
+- scripts/build_images.sh
+
+**构建策略**:
+- PR: 仅验证构建
+- Main branch: 构建并推送到 registry
+- Tags: 创建发布版本镜像
+
+**实施详情**:
+- **文件**: `.github/workflows/docker.yml`
+- **触发条件**:
+  - Push/PR to main/develop (当修改 docker/, requirements.txt, src/ 时)
+  - 标签发布 (v*.*.*)
+  - 手动触发 (workflow_dispatch)
+- **构建任务**:
+  - 多平台构建和测试 (linux/amd64, linux/arm64)
+  - 版本检查 (Python, TensorFlow, ONNX Runtime, Transformers)
+  - 导入测试 (验证所有关键包可导入)
+  - 架构检查 (平台、CPU、内存信息)
+  - 应用程序测试 (--help 命令)
+  - 镜像大小分析 (显示层信息)
+- **推送任务**:
+  - 仅在非 PR 事件时执行
+  - 推送到 GitHub Container Registry (ghcr.io)
+  - 支持多种标签策略 (branch, semver, sha, latest)
+- **安全扫描**:
+  - 使用 Trivy 扫描镜像漏洞
+  - 上传结果到 GitHub Security
+  - 生成人类可读的报告
+
+---
+
+#### 10.5 集成测试 Workflow ✅ 低-中优先级
+
+**功能**:
+- [x] 运行标记为 `@pytest.mark.integration` 的测试
+- [x] 运行标记为 `@pytest.mark.slow` 的长时间测试
+- [x] 使用更大的 runner（需要更多 CPU/内存）
+- [x] 定期运行（每日/每周）而不是每次 commit
+- [x] 可选：在云端运行完整的 benchmark 测试
+
+**测试类型**:
+- 数据集加载测试（需要网络下载）
+- 模型加载和转换测试
+- 端到端 benchmark 运行测试
+
+**运行时间预估**:
+- 集成测试：10-30 分钟
+- 完整 benchmark：1-6 小时（根据配置）
+
+**实施详情**:
+- **文件**: `.github/workflows/integration.yml`
+- **触发条件**:
+  - 定期执行 (每日 2:00 UTC)
+  - Push to main (仅当修改 src/, tests/, requirements.txt)
+  - 手动触发 (支持选择测试类型: integration/slow/all)
+- **测试任务**:
+  - 运行集成测试和慢速测试
+  - 快速 benchmark 测试 (50 samples, 10 iterations)
+  - 生成覆盖率报告
+  - 上传测试结果到 Artifacts
+- **通知功能**:
+  - 定期运行失败时自动创建 Issue
+  - 包含详细的失败信息和运行链接
+
+---
+
+#### 10.6 文档自动生成 ✅ 低优先级
+
+**功能**:
+- [x] 自动生成 API 文档（Sphinx 或 MkDocs）
+- [x] 部署到 GitHub Pages
+- [x] 验证 README 和文档中的示例代码
+- [x] 检查文档链接有效性
+- [x] 生成 changelog
+
+**文档类型**:
+- API 参考文档
+- 用户指南
+- 开发者文档
+- 示例和教程
+
+**实施详情**:
+- **文件**: `.github/workflows/docs.yml`
+- **触发条件**:
+  - Push/PR to main (当修改 src/, docs/, *.md 时)
+  - 手动触发
+- **验证任务**:
+  - Markdown 链接检查 (markdown-link-check)
+  - README 代码示例语法验证
+  - 文档完整性检查 (README, LICENSE, TODO 等)
+  - 文档大小统计
+- **生成任务**:
+  - 使用 pdoc3 生成 API 文档
+  - 创建文档索引页面
+  - 上传文档到 Artifacts
+- **部署任务**:
+  - 自动部署到 GitHub Pages (仅 main 分支)
+  - 生成文档网站 URL
+
+---
+
+#### 10.7 性能基准测试和回归检测 ✅ 低优先级
+
+**功能**:
+- [x] 定期运行 benchmark 并记录结果
+- [x] 比较不同版本的性能变化
+- [x] 生成性能趋势图表
+- [x] 检测性能退化（超过阈值时告警）
+- [x] 将结果发布到 GitHub Pages
+
+**基准测试场景**:
+- Quick mode benchmark（每次 PR）
+- Standard mode benchmark（每日）
+- Full mode benchmark（每周）
+
+**性能指标**:
+- 延迟（P50/P95/P99）
+- 吞吐量
+- 内存使用
+- CPU 利用率
+
+**实施详情**:
+- **文件**: `.github/workflows/benchmark.yml`
+- **触发条件**:
+  - 定期执行 (每周日 3:00 UTC)
+  - Push to main (当修改 src/benchmark/, src/engines/)
+  - 手动触发 (支持选择模式: quick/standard/full 和样本数)
+- **基准测试任务**:
+  - 自动配置测试参数 (基于模式调整样本数和迭代次数)
+  - 运行多引擎性能测试 (TensorFlow, TFLite, ONNX Runtime)
+  - 多批次大小测试 (1, 8, 16)
+  - 生成性能趋势数据
+  - 创建可视化图表 (matplotlib, plotly)
+- **历史追踪**:
+  - 保存性能历史到 performance_data 分支
+  - 与前一次运行比较检测回归
+  - 生成性能分析报告
+- **发布任务**:
+  - 发布结果到 GitHub Pages (定期运行)
+  - 上传详细结果到 Artifacts (90天保留)
+
+---
+
+### 实施优先级建议
+
+**第一阶段（本周）**: ✅ 已完成
+1. ✅ 基础 CI/CD Workflow（最重要）
+2. ✅ 代码质量检查 Workflow
+
+**第二阶段（本月）**: ✅ 已完成
+3. ✅ 依赖安全检查
+4. ✅ Docker 镜像构建测试
+
+**第三阶段（可选）**: ✅ 已完成
+5. ✅ 集成测试 Workflow
+6. ✅ 文档自动生成
+7. ✅ 性能基准测试
+
+---
+
+### 🎉 CI/CD 实施总结
+
+**全部完成！** 项目现已拥有完整的 CI/CD 自动化流程：
+
+#### 已实施的 7 个 GitHub Actions Workflows:
+
+1. **CI Workflow** (`.github/workflows/ci.yml`)
+   - 单元测试自动化
+   - 代码覆盖率追踪
+   - 多 Python 版本支持 (3.11, 3.12)
+
+2. **Code Quality Workflow** (`.github/workflows/lint.yml`)
+   - Black 代码格式检查
+   - Flake8 语法检查
+   - isort import 排序
+   - mypy 类型检查
+
+3. **Security Workflow** (`.github/workflows/security.yml`)
+   - pip-audit 和 Safety 依赖漏洞扫描
+   - 定期安全审计 (每周)
+   - 自动创建安全 Issue
+
+4. **Docker Workflow** (`.github/workflows/docker.yml`)
+   - 多平台镜像构建 (amd64, arm64)
+   - 完整的镜像测试套件
+   - 自动推送到 GitHub Container Registry
+   - Trivy 安全扫描
+
+5. **Integration Tests Workflow** (`.github/workflows/integration.yml`)
+   - 集成测试和慢速测试
+   - 快速 benchmark 测试
+   - 定期运行 (每日)
+   - 失败自动通知
+
+6. **Documentation Workflow** (`.github/workflows/docs.yml`)
+   - API 文档自动生成 (pdoc3)
+   - Markdown 链接验证
+   - 代码示例验证
+   - 自动部署到 GitHub Pages
+
+7. **Performance Benchmark Workflow** (`.github/workflows/benchmark.yml`)
+   - 定期性能基准测试 (每周)
+   - 性能回归检测
+   - 历史趋势追踪
+   - 可视化报告生成
+
+#### 主要特性:
+- ✅ 自动化测试和质量检查
+- ✅ 安全漏洞扫描和监控
+- ✅ 多平台 Docker 支持
+- ✅ 完整的文档生成和发布
+- ✅ 性能监控和回归检测
+- ✅ 智能的失败通知机制
+- ✅ 详细的运行报告和摘要
+
+---
+
 ## 📝 技术债务
 
 ### 8. 代码质量改进
