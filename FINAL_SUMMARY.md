@@ -372,4 +372,26 @@ hasattr(model, '__call__') and hasattr(model, 'predict')  # True for all models
 **任务状态**: ✅ 完成
 **准备合并**: ✅ 是
 
+---
+
+## 🧹 后续清理 (2025-11-08)
+
+### 移除 Transformers 依赖
+
+**原因**: 本项目不需要 HuggingFace Transformers 库
+
+**清理内容**:
+- ✅ 删除所有 BERT 测试文件（test_bert_*.py, BERT_TEST_RESULTS.md）
+- ✅ 删除 scripts/test_tf_bert.py
+- ✅ 从 requirements.txt 移除 transformers, datasets, tokenizers
+- ✅ 在 README.md 开头添加重要说明
+
+**说明**:
+- TensorFlow Engine 的修复仍然有效
+- 修复使用鸭子类型，支持任何实现 `__call__` 和 `predict` 的模型
+- 项目专注于 TensorFlow/Keras 原生模型的基准测试
+- Transformers 支持仅作为设计考虑，不是核心功能
+
+---
+
 🎉🎉🎉 **TODO.md Issue #1 完全解决！** 🎉🎉🎉
