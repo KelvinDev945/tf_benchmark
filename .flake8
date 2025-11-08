@@ -1,0 +1,48 @@
+[flake8]
+# Base configuration
+max-line-length = 100
+max-complexity = 15
+
+# Compatibility with black
+extend-ignore = E203, E266, E501, W503
+extend-select = B950
+
+# Exclude patterns
+exclude =
+    .git,
+    __pycache__,
+    .eggs,
+    *.egg,
+    .venv,
+    venv,
+    build,
+    dist,
+    htmlcov,
+    .pytest_cache,
+    .mypy_cache,
+    .tox,
+    *.pyc,
+    __init__.py
+
+# Specify files to check
+filename = *.py
+
+# Error codes to always report
+select = C,E,F,W,B,B9
+
+# Per-file ignores (if needed)
+per-file-ignores =
+    __init__.py:F401
+    tests/*:F401,F811
+
+# Show source code for errors
+show-source = true
+
+# Show pep8 error name
+show-pep8 = true
+
+# Count errors
+count = true
+
+# Statistics
+statistics = true
