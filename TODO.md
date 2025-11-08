@@ -176,13 +176,13 @@ module 'numpy' has no attribute 'object'.
 
 ---
 
-#### 10.3 依赖安全检查 Workflow 🟡 中优先级
+#### 10.3 依赖安全检查 Workflow ✅ 中优先级
 
 **功能**:
-- [ ] 扫描 requirements.txt 中的安全漏洞
-- [ ] 使用 pip-audit 或 safety 工具
-- [ ] 定期检查（每周一次 + 每次更新依赖时）
-- [ ] 发现漏洞时创建 Issue 或发送通知
+- [x] 扫描 requirements.txt 中的安全漏洞
+- [x] 使用 pip-audit 或 safety 工具
+- [x] 定期检查（每周一次 + 每次更新依赖时）
+- [x] 发现漏洞时创建 Issue 或发送通知
 
 **检查项目**:
 - requirements.txt
@@ -194,16 +194,30 @@ module 'numpy' has no attribute 'object'.
 - 保持项目安全性
 - 符合安全最佳实践
 
+**实施详情**:
+- **文件**: `.github/workflows/security.yml`
+- **工具**: pip-audit, safety
+- **触发条件**:
+  - Push/PR to main/develop (仅当修改 requirements.txt)
+  - 定期执行 (每周一 9:00 UTC)
+  - 手动触发 (workflow_dispatch)
+- **功能特性**:
+  - 使用 pip-audit 和 Safety 双重扫描
+  - 检查过时的包版本
+  - 生成详细的安全报告
+  - 定期扫描时自动创建 Issue (如果发现漏洞)
+  - 上传报告到 Artifacts (保留90天)
+
 ---
 
-#### 10.4 Docker 镜像构建测试 🟡 中优先级
+#### 10.4 Docker 镜像构建测试 ✅ 中优先级
 
 **功能**:
-- [ ] 验证 Dockerfile 能成功构建
-- [ ] 测试构建的镜像能正常运行
-- [ ] 多平台构建测试（x86_64, ARM64）
-- [ ] 可选：推送到 Docker Hub 或 GitHub Container Registry
-- [ ] 镜像大小和层数优化检查
+- [x] 验证 Dockerfile 能成功构建
+- [x] 测试构建的镜像能正常运行
+- [x] 多平台构建测试（x86_64, ARM64）
+- [x] 可选：推送到 Docker Hub 或 GitHub Container Registry
+- [x] 镜像大小和层数优化检查
 
 **相关文件**:
 - docker/Dockerfile
@@ -213,6 +227,28 @@ module 'numpy' has no attribute 'object'.
 - PR: 仅验证构建
 - Main branch: 构建并推送到 registry
 - Tags: 创建发布版本镜像
+
+**实施详情**:
+- **文件**: `.github/workflows/docker.yml`
+- **触发条件**:
+  - Push/PR to main/develop (当修改 docker/, requirements.txt, src/ 时)
+  - 标签发布 (v*.*.*)
+  - 手动触发 (workflow_dispatch)
+- **构建任务**:
+  - 多平台构建和测试 (linux/amd64, linux/arm64)
+  - 版本检查 (Python, TensorFlow, ONNX Runtime, Transformers)
+  - 导入测试 (验证所有关键包可导入)
+  - 架构检查 (平台、CPU、内存信息)
+  - 应用程序测试 (--help 命令)
+  - 镜像大小分析 (显示层信息)
+- **推送任务**:
+  - 仅在非 PR 事件时执行
+  - 推送到 GitHub Container Registry (ghcr.io)
+  - 支持多种标签策略 (branch, semver, sha, latest)
+- **安全扫描**:
+  - 使用 Trivy 扫描镜像漏洞
+  - 上传结果到 GitHub Security
+  - 生成人类可读的报告
 
 ---
 
@@ -277,15 +313,15 @@ module 'numpy' has no attribute 'object'.
 
 ### 实施优先级建议
 
-**第一阶段（本周）**:
-1. 基础 CI/CD Workflow（最重要）
-2. 代码质量检查 Workflow
+**第一阶段（本周）**: ✅ 已完成
+1. ✅ 基础 CI/CD Workflow（最重要）
+2. ✅ 代码质量检查 Workflow
 
-**第二阶段（本月）**:
-3. 依赖安全检查
-4. Docker 镜像构建测试
+**第二阶段（本月）**: ✅ 已完成
+3. ✅ 依赖安全检查
+4. ✅ Docker 镜像构建测试
 
-**第三阶段（可选）**:
+**第三阶段（可选）**: 待实施
 5. 集成测试 Workflow
 6. 文档自动生成
 7. 性能基准测试
