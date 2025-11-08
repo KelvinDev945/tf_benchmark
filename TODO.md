@@ -133,6 +133,165 @@ module 'numpy' has no attribute 'object'.
 
 ---
 
+## 🔧 CI/CD 自动化
+
+### 10. GitHub Actions Workflow 集成
+
+#### 10.1 基础 CI/CD Workflow ✅ 高优先级
+
+**功能**:
+- [ ] 自动运行单元测试（pytest）
+- [ ] 生成代码覆盖率报告（pytest-cov）
+- [ ] 多 Python 版本测试矩阵（3.11, 3.12）
+- [ ] 在 PR 和 push 到主分支时自动触发
+- [ ] 上传覆盖率报告到 Codecov/Coveralls
+
+**触发条件**:
+- Push to main/develop branches
+- Pull requests
+
+**预期效果**:
+- 每次提交自动验证代码质量
+- 防止破坏性更改合并到主分支
+- 快速反馈（< 5分钟）
+
+---
+
+#### 10.2 代码质量检查 Workflow ✅ 高优先级
+
+**功能**:
+- [ ] Black 代码格式化检查
+- [ ] Flake8 语法和风格检查
+- [ ] isort import 排序检查
+- [ ] mypy 类型注解检查
+- [ ] 在 PR 中添加代码质量报告注释
+
+**工具配置**:
+- 使用项目中已有的 black、flake8、isort、mypy
+- 配置文件：pyproject.toml 或 setup.cfg
+
+**可选功能**:
+- [ ] 自动修复格式问题并提交（通过 bot）
+- [ ] 代码质量评分和趋势分析
+
+---
+
+#### 10.3 依赖安全检查 Workflow 🟡 中优先级
+
+**功能**:
+- [ ] 扫描 requirements.txt 中的安全漏洞
+- [ ] 使用 pip-audit 或 safety 工具
+- [ ] 定期检查（每周一次 + 每次更新依赖时）
+- [ ] 发现漏洞时创建 Issue 或发送通知
+
+**检查项目**:
+- requirements.txt
+- 已知 CVE 数据库
+- 过时的包版本
+
+**好处**:
+- 及时发现依赖包的安全问题
+- 保持项目安全性
+- 符合安全最佳实践
+
+---
+
+#### 10.4 Docker 镜像构建测试 🟡 中优先级
+
+**功能**:
+- [ ] 验证 Dockerfile 能成功构建
+- [ ] 测试构建的镜像能正常运行
+- [ ] 多平台构建测试（x86_64, ARM64）
+- [ ] 可选：推送到 Docker Hub 或 GitHub Container Registry
+- [ ] 镜像大小和层数优化检查
+
+**相关文件**:
+- docker/Dockerfile
+- scripts/build_images.sh
+
+**构建策略**:
+- PR: 仅验证构建
+- Main branch: 构建并推送到 registry
+- Tags: 创建发布版本镜像
+
+---
+
+#### 10.5 集成测试 Workflow 🟢 低-中优先级
+
+**功能**:
+- [ ] 运行标记为 `@pytest.mark.integration` 的测试
+- [ ] 运行标记为 `@pytest.mark.slow` 的长时间测试
+- [ ] 使用更大的 runner（需要更多 CPU/内存）
+- [ ] 定期运行（每日/每周）而不是每次 commit
+- [ ] 可选：在云端运行完整的 benchmark 测试
+
+**测试类型**:
+- 数据集加载测试（需要网络下载）
+- 模型加载和转换测试
+- 端到端 benchmark 运行测试
+
+**运行时间预估**:
+- 集成测试：10-30 分钟
+- 完整 benchmark：1-6 小时（根据配置）
+
+---
+
+#### 10.6 文档自动生成 🟢 低优先级
+
+**功能**:
+- [ ] 自动生成 API 文档（Sphinx 或 MkDocs）
+- [ ] 部署到 GitHub Pages
+- [ ] 验证 README 和文档中的示例代码
+- [ ] 检查文档链接有效性
+- [ ] 生成 changelog
+
+**文档类型**:
+- API 参考文档
+- 用户指南
+- 开发者文档
+- 示例和教程
+
+---
+
+#### 10.7 性能基准测试和回归检测 🟢 低优先级
+
+**功能**:
+- [ ] 定期运行 benchmark 并记录结果
+- [ ] 比较不同版本的性能变化
+- [ ] 生成性能趋势图表
+- [ ] 检测性能退化（超过阈值时告警）
+- [ ] 将结果发布到 GitHub Pages
+
+**基准测试场景**:
+- Quick mode benchmark（每次 PR）
+- Standard mode benchmark（每日）
+- Full mode benchmark（每周）
+
+**性能指标**:
+- 延迟（P50/P95/P99）
+- 吞吐量
+- 内存使用
+- CPU 利用率
+
+---
+
+### 实施优先级建议
+
+**第一阶段（本周）**:
+1. 基础 CI/CD Workflow（最重要）
+2. 代码质量检查 Workflow
+
+**第二阶段（本月）**:
+3. 依赖安全检查
+4. Docker 镜像构建测试
+
+**第三阶段（可选）**:
+5. 集成测试 Workflow
+6. 文档自动生成
+7. 性能基准测试
+
+---
+
 ## 📝 技术债务
 
 ### 8. 代码质量改进
