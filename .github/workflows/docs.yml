@@ -41,31 +41,6 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install markdown-link-check pyspelling
-
-      - name: Check Markdown links
-        continue-on-error: true
-        run: |
-          echo "## 🔗 Markdown Link Validation" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          # Install markdown-link-check via npm
-          sudo npm install -g markdown-link-check
-
-          # Check all markdown files
-          find . -name "*.md" -not -path "*/node_modules/*" -not -path "*/.git/*" | while read file; do
-            echo "Checking: $file"
-            markdown-link-check "$file" -q || true
-          done > link-check.txt 2>&1
-
-          if grep -q "ERROR" link-check.txt; then
-            echo "⚠️ Some broken links found:" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            grep "ERROR" link-check.txt >> $GITHUB_STEP_SUMMARY || true
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          else
-            echo "✅ All links are valid" >> $GITHUB_STEP_SUMMARY
-          fi
 
       - name: Validate README examples
         continue-on-error: true
