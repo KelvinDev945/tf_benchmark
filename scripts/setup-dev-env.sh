@@ -6,6 +6,12 @@ set -e
 
 echo "🔧 Setting up development environment..."
 
+# Install development dependencies if requirements-dev.txt is present
+if [ -f "requirements-dev.txt" ]; then
+    echo "📦 Installing development dependencies from requirements-dev.txt..."
+    pip install -r requirements-dev.txt
+fi
+
 # Check if pre-commit is installed
 if ! command -v pre-commit &> /dev/null; then
     echo "📦 Installing pre-commit..."

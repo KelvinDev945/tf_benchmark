@@ -1,101 +1,97 @@
+# syntax=docker/dockerfile:1.6
+
 # TensorFlow Multi-Engine CPU Inference Benchmark
 # Multi-architecture Dockerfile (x86_64 and ARM64)
 
-# Build argument for target architecture
+ARG PYTHON_VERSION=3.11
+ARG ENABLE_OPENVINO=false
+
+FROM python:${PYTHON_VERSION}-slim AS builder
+
 ARG TARGETARCH=amd64
+ARG ENABLE_OPENVINO=false
 
-FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive \
+    VIRTUAL_ENV=/opt/venv \
+    PATH="/opt/venv/bin:$PATH"
 
-# Set environment variables
+# Install build-time tools and headers required for dependency resolution
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    libhdf5-dev \
+    libgomp1 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && python -m venv "$VIRTUAL_ENV" \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh
+
+ENV PATH="/root/.local/bin:$PATH"
+
+WORKDIR /deps
+
+# Copy dependency manifest
+COPY requirements.txt .
+
+# Resolve and install Python dependencies into the virtual environment
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install --python "$VIRTUAL_ENV/bin/python" --no-cache-dir -r requirements.txt
+
+# Optional: add OpenVINO for x86_64 builds when ENABLE_OPENVINO=true
+RUN if [ "$TARGETARCH" = "amd64" ] && [ "$ENABLE_OPENVINO" = "true" ]; then \
+        uv pip install --python "$VIRTUAL_ENV/bin/python" --no-cache-dir openvino==2023.2.0 openvino-dev==2023.2.0; \
+    else \
+        echo "Skipping OpenVINO (arch: $TARGETARCH)"; \
+    fi
+
+# Attempt to install TensorFlow Lite runtime (best-effort)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install --python "$VIRTUAL_ENV/bin/python" --no-cache-dir \
+        --extra-index-url https://google-coral.github.io/py-repo/ \
+        tflite_runtime 2>/dev/null || \
+    echo "Warning: tflite_runtime not available for Python ${PYTHON_VERSION}, falling back to TensorFlow Lite bundled runtime"
+
+# Clean up caches and bytecode inside the virtual environment
+RUN find "$VIRTUAL_ENV" -type d -name "__pycache__" -exec rm -rf {} + && \
+    rm -rf /root/.cache/uv
+
+# --------------------------------------------------------------------------- #
+
+FROM python:${PYTHON_VERSION}-slim AS runtime
+
+ARG TARGETARCH=amd64
+ARG ENABLE_OPENVINO=false
+
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     TF_CPP_MIN_LOG_LEVEL=2 \
     LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8
+    LC_ALL=C.UTF-8 \
+    VIRTUAL_ENV=/opt/venv \
+    PATH="/opt/venv/bin:$PATH"
 
-# Install system dependencies
+# Install runtime shared libraries only
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3.11 \
-    python3.11-dev \
-    python3-pip \
-    wget \
-    curl \
-    git \
-    build-essential \
-    cmake \
-    pkg-config \
-    libhdf5-dev \
-    libssl-dev \
-    libffi-dev \
+    libhdf5-310 \
+    libgomp1 \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv - ultra-fast Python package installer
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    echo 'export PATH="/root/.local/bin:$PATH"' >> /root/.bashrc
-
-# Add uv to PATH for the current build
-ENV PATH="/root/.local/bin:$PATH"
-
-# Set python3.11 as default python3
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 && \
-    update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
-
-# Set working directory
 WORKDIR /app
 
-# Copy requirements file
-COPY requirements.txt .
+# Copy pre-built virtual environment from builder stage
+COPY --from=builder /opt/venv /opt/venv
 
-# Install Python dependencies using uv (much faster than pip)
-RUN uv pip install --system -r requirements.txt
+# Prepare application directories
+RUN mkdir -p /app/src /app/configs /app/results /app/models /app/data && \
+    chmod -R 755 /app
 
-# Install architecture-specific packages
-ARG TARGETARCH
-RUN if [ "$TARGETARCH" = "amd64" ]; then \
-        echo "Installing OpenVINO for x86_64..." && \
-        uv pip install --system --no-deps openvino==2023.2.0 && \
-        uv pip install --system --no-deps openvino-dev==2023.2.0 && \
-        uv pip install --system openvino==2023.2.0 openvino-dev==2023.2.0; \
-    else \
-        echo "Skipping OpenVINO (ARM64 not supported)"; \
-    fi
-
-# Install TFLite runtime (without upgrading dependencies)
-# Note: tflite_runtime may not be available for Python 3.11, so we allow it to fail
-RUN uv pip install --system --no-deps --extra-index-url https://google-coral.github.io/py-repo/ tflite_runtime || \
-    uv pip install --system --extra-index-url https://google-coral.github.io/py-repo/ tflite_runtime || \
-    echo "Warning: tflite_runtime not available for Python 3.11, will use TensorFlow Lite from TensorFlow"
-
-# Create necessary directories
-RUN mkdir -p /app/src /app/configs /app/results /app/models /app/data
-
-# Copy application code
+# Copy source code and configs
 COPY src/ /app/src/
 COPY configs/ /app/configs/
 
-# Set permissions
-RUN chmod -R 755 /app
-
-# Verify installations
-RUN python3 -c "import tensorflow as tf; print(f'TensorFlow version: {tf.__version__}')" && \
-    python3 -c "import onnxruntime as ort; print(f'ONNX Runtime version: {ort.__version__}')" && \
-    python3 -c "import tensorflow_hub as hub; print(f'TensorFlow Hub version: {hub.__version__}')"
-
-# Verify OpenVINO (x86_64 only)
-RUN if [ "$TARGETARCH" = "amd64" ]; then \
-        python3 -c "from openvino.runtime import Core; print(f'OpenVINO available: True')"; \
-    fi
-
-# Display system information
-RUN python3 -c "import platform; import psutil; \
-    print(f'Platform: {platform.platform()}'); \
-    print(f'Architecture: {platform.machine()}'); \
-    print(f'CPU count: {psutil.cpu_count()}'); \
-    print(f'Total memory: {psutil.virtual_memory().total / (1024**3):.2f} GB')"
-
-# Set entrypoint
-ENTRYPOINT ["python3"]
+# Entrypoint executes inside the virtual environment
+ENTRYPOINT ["python"]
 
 # Default command
 CMD ["src/main.py", "--help"]

@@ -1,16 +1,15 @@
 # TensorFlow Multi-Engine CPU Inference Benchmark
 # Python Dependencies
 
-# Core Deep Learning Frameworks
-tensorflow==2.20.0
+# Core Deep Learning Frameworks (CPU-only build reduces Docker size)
+tensorflow-cpu==2.15.0
 tensorflow-hub>=0.16.0
-tf-keras>=2.20.0
+tf-keras==2.15.0
 
 # ONNX and ONNX Runtime
 onnx>=1.15.0
 onnxruntime>=1.16.0
-# tf2onnx>=1.16.0  # Incompatible: requires protobuf<4.0, conflicts with TF 2.20's protobuf>=5.28
-optimum[onnxruntime]>=1.16.0  # HuggingFace Optimum for ONNX conversion (no protobuf conflict)
+tf2onnx==1.16.1
 
 # HuggingFace Libraries (NOT REQUIRED - removed)
 # This project does not require HuggingFace libraries
@@ -53,19 +52,6 @@ rich>=13.7.0
 # Templating (for report generation)
 jinja2>=3.1.0
 
-# Testing
-pytest>=7.4.0
-pytest-cov>=4.1.0
-pytest-xdist>=3.5.0
-
-# Type Checking
-mypy>=1.7.0
-types-PyYAML>=6.0.0
-
-# Code Quality
-black>=23.12.0
-flake8>=6.1.0
-isort>=5.13.0
 
 # Logging
 coloredlogs>=15.0.1
@@ -86,8 +72,8 @@ tensorflow-model-optimization>=0.7.5
 # HDF5 Support
 h5py>=3.10.0
 
-# Protobuf (compatible version for TensorFlow)
-protobuf>=5.28.0
+# Protobuf (compatible version for TensorFlow 2.15)
+protobuf>=3.20.3,<4.0
 
 # Network Analysis (optional)
 # networkx>=3.2.0  # Not used in codebase
