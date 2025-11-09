@@ -266,7 +266,7 @@ class BERTBenchmarkComparison:
                 output_path=str(onnx_path),
                 opset=13,
             )
-        print("✓ Converted to ONNX")
+            print("✓ Converted to ONNX")
             print(f"  Model size: {metadata.get('model_size_mb', 0):.2f} MB")
         else:
             print(f"✓ Using cached ONNX model: {onnx_path}")
