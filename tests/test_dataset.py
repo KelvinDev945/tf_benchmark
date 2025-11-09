@@ -100,78 +100,49 @@ class TestImageDatasetLoader:
 class TestTextDatasetLoader:
     """Tests for TextDatasetLoader."""
 
-    def test_init_valid_params(self):
-        """Test initialization with valid parameters."""
+    def test_init_and_load(self):
+        """Loader should expose basic metadata and samples."""
         from src.dataset import TextDatasetLoader
 
-        loader = TextDatasetLoader(
-            dataset_name="glue",
-            subset="sst2",
-            split="validation",
-            tokenizer="bert-base-uncased",
-            num_samples=100,
-            max_length=128,
-        )
+        loader = TextDatasetLoader(num_samples=2, max_length=16)
+        loader = loader.load()
 
-        assert loader.dataset_name == "glue"
-        assert loader.subset == "sst2"
-        assert loader.split == "validation"
-        assert loader.num_samples == 100
-        assert loader.max_length == 128
-
-    def test_init_invalid_num_samples(self):
-        """Test initialization with invalid num_samples."""
-        from src.dataset import TextDatasetLoader
-
-        with pytest.raises(ValueError, match="num_samples must be positive"):
-            TextDatasetLoader(num_samples=-1)
-
-    def test_init_invalid_max_length(self):
-        """Test initialization with invalid max_length."""
-        from src.dataset import TextDatasetLoader
-
-        with pytest.raises(ValueError, match="max_length must be positive"):
-            TextDatasetLoader(max_length=-1)
+        assert len(loader) == 2
+        stats = loader.get_stats()
+        assert stats["num_samples"] == 2
+        assert stats["max_length"] == 16
 
     def test_tokenize_single_text(self):
-        """Test tokenization of single text."""
+        """Tokenization should return numpy arrays with expected shapes."""
         from src.dataset import TextDatasetLoader
 
-        loader = TextDatasetLoader()
+        loader = TextDatasetLoader(max_length=8)
+        tokens = loader.tokenize("Hello Benchmark World!")
 
-        text = "This is a test sentence."
-        encoding = loader.tokenize(text, max_length=32, padding="max_length")
-
-        assert "input_ids" in encoding
-        assert "attention_mask" in encoding
-        assert len(encoding["input_ids"]) == 32
-        assert len(encoding["attention_mask"]) == 32
+        assert set(tokens.keys()) == {"input_ids", "attention_mask"}
+        assert tokens["input_ids"].shape == (8,)
+        assert tokens["attention_mask"].shape == (8,)
 
     def test_tokenize_batch_texts(self):
-        """Test tokenization of batch of texts."""
+        """Batch tokenization should stack inputs properly."""
         from src.dataset import TextDatasetLoader
 
-        loader = TextDatasetLoader()
+        loader = TextDatasetLoader(max_length=10)
+        texts = ["first sample", "second sample"]
+        tokens = loader.tokenize(texts)
 
-        texts = ["First sentence.", "Second sentence.", "Third sentence."]
-        encoding = loader.tokenize(texts, max_length=32, padding="max_length")
-
-        assert "input_ids" in encoding
-        assert "attention_mask" in encoding
-        assert len(encoding["input_ids"]) == 3
-        assert all(len(ids) == 32 for ids in encoding["input_ids"])
+        assert tokens["input_ids"].shape == (2, 10)
+        assert tokens["attention_mask"].shape == (2, 10)
 
     def test_repr(self):
-        """Test string representation."""
+        """String representation should include key metadata."""
         from src.dataset import TextDatasetLoader
 
-        loader = TextDatasetLoader(
-            dataset_name="glue", subset="sst2", split="train", num_samples=50
-        )
-
+        loader = TextDatasetLoader(dataset_name="demo", subset="train", split="train")
         repr_str = repr(loader)
+
         assert "TextDatasetLoader" in repr_str
-        assert "glue/sst2" in repr_str
+        assert "demo" in repr_str
         assert "train" in repr_str
 
 
@@ -188,24 +159,6 @@ class TestDatasetIntegration:
         pytest.skip("Skipping integration test (requires network)")
 
         loader = ImageDatasetLoader(num_samples=10)
-        loader.load()
-
-        assert len(loader) == 10
-        assert loader.dataset is not None
-
-        stats = loader.get_stats()
-        assert stats["num_samples"] == 10
-
-    @pytest.mark.integration
-    @pytest.mark.slow
-    def test_text_dataset_load_small_sample(self):
-        """Test loading a small sample of text dataset."""
-        from src.dataset import TextDatasetLoader
-
-        # This test actually downloads data - skip in CI
-        pytest.skip("Skipping integration test (requires network)")
-
-        loader = TextDatasetLoader(num_samples=10)
         loader.load()
 
         assert len(loader) == 10

@@ -4,19 +4,17 @@
 
 ## ⚠️ 重要说明 / Important Note
 
-**本项目不需要 HuggingFace Transformers 库**
+**项目核心仍以图像模型为主，但已通过 TensorFlow Hub 恢复 BERT 文本模型的可选支持。**
 
-This project does **NOT** require the HuggingFace `transformers` library. The TensorFlow Engine has been designed to support any callable TensorFlow model with a `predict` method, including:
+The benchmark focuses on image workloads by default, while optional BERT text pipelines are available without requiring HuggingFace `transformers` / `datasets`. The TensorFlow engine continues to support:
 - ✅ Native Keras models (`tf.keras.Sequential`, `tf.keras.Model`)
 - ✅ TensorFlow SavedModel format
-- ✅ Any custom model implementing `__call__` and `predict`
-
-If you see references to BERT or Transformers models in the codebase, these are for **compatibility testing only** and are not required for the core functionality. The project focuses on benchmarking standard TensorFlow models using multiple inference engines.
+- ✅ TensorFlow Hub BERT encoders + 轻量级文本数据管线
 
 ## ✨ Features
 
 - 🚀 **Multi-Engine Support**: TensorFlow, TFLite, ONNX Runtime, and OpenVINO
-- 🎯 **Real-World Datasets**: ImageNet-1K for image models, GLUE/SST2 for text models
+- 🎯 **Real-World Datasets**: ImageNet-1K、CIFAR-10/100 图像数据集 + 内置轻量级文本样本
 - ⚡ **Multiple Optimizations**: XLA JIT, mixed precision, quantization (INT8, FP16)
 - 📊 **Comprehensive Metrics**: Latency (P50/P95/P99), throughput, CPU/memory usage
 - 🐳 **Docker Support**: Containerized execution for reproducibility
@@ -34,67 +32,34 @@ If you see references to BERT or Transformers models in the codebase, these are 
 
 ### Supported Models
 
-**Image Classification:**
+**Image Classification (默认支持):**
 - MobileNetV2
 - ResNet50
 - EfficientNetB0
+- InceptionV3
+- VGG16
+**Text Understanding (可选，基于 TensorFlow Hub):**
+- BERT Base (uncased)
+- 自带轻量级 `TextDatasetLoader`（无需 HuggingFace 数据集）
 
-**Text Understanding:**
-- DistilBERT (base-uncased)
-- BERT (base-uncased)
+### BERT Demo (TensorFlow Hub)
 
-### Benchmark Testing Requirements
+```bash
+# 挂载本地缓存目录，避免每次重新下载 TF Hub 模型
+docker run --rm \
+    -v ~/.cache/tfhub:/root/.cache/tfhub \
+    -v $(pwd):/workspace -w /workspace \
+    --entrypoint python3 tf-cpu-benchmark:uv \
+    scripts/demo_bert_tf_only.py
+```
 
-**所有benchmark测试必须同时测试bert-base和mobilenet模型**
+> 说明：脚本与核心代码会优先从 `~/.cache/tfhub`（可通过 `TFHUB_CACHE_DIR` 覆盖）读取模型；若缓存缺失会自动下载并写回该目录。
+>
+> 运行完成后，基准结果与 Markdown 报告会写入 `results/bert_tf_demo/`。首次执行需要联网下载约 430 MB 的 TF Hub 模块；后续运行只要挂载相同缓存目录即可复用。
 
-All benchmark tests MUST include both BERT-Base and MobileNet models to ensure comprehensive performance evaluation across different model architectures:
-- **BERT-Base**: Represents transformer-based NLP models with ~110M parameters
-- **MobileNet**: Represents efficient CNN-based vision models optimized for mobile/edge devices
-
-This requirement ensures that all optimization techniques (XLA, mixed precision, quantization, ONNX conversion) are validated on both model types.
+如需修改批大小、序列长度或迭代次数，可编辑 `scripts/demo_bert_tf_only.py` 顶部的 `BATCH_SIZE`、`SEQ_LENGTH`、`NUM_WARMUP` 与 `NUM_TEST` 配置；`src/models.ModelLoader.load_text_model()` 同样复用上述缓存目录，可直接在自定义流程中加载 BERT 分类器。
 
 ## 🚀 Quick Start
-
-### BERT Model Comparison (NEW!)
-
-Compare BERT base model vs quantized vs ONNX in minutes:
-
-```bash
-# Quick BERT comparison (5-10 minutes)
-python3 scripts/benchmark_bert_comparison.py --mode quick
-
-# Standard BERT comparison (recommended, 20-30 minutes)
-python3 scripts/benchmark_bert_comparison.py --mode standard
-
-# View results
-cat results/bert_comparison/bert_comparison_report.md
-```
-
-See [BERT_BENCHMARK_GUIDE.md](BERT_BENCHMARK_GUIDE.md) for detailed instructions.
-
-### BERT TensorFlow vs ONNX Direct Comparison (NEW!)
-
-Compare TensorFlow BERT with ONNX Runtime using SavedModel approach (fixes TF 2.20 compatibility):
-
-```bash
-# Run BERT TF vs ONNX comparison (local)
-python3 scripts/bert_tf_vs_onnx.py --num-warmup 10 --num-test 50
-
-# Run with Docker (recommended for reproducibility)
-docker run --rm -v $(pwd)/results:/app/results \
-    tf-cpu-benchmark:uv \
-    python3 scripts/bert_tf_vs_onnx.py --num-warmup 10 --num-test 50
-
-# View results
-cat results/bert_tf_vs_onnx/savedmodel_test_report.md
-```
-
-**Key Features**:
-- ✅ Uses SavedModel format (TF 2.20 compatible)
-- ✅ Avoids KerasLayer compatibility issues
-- ✅ Direct serving signature inference
-- 📊 Detailed latency metrics (p50, p95, p99)
-- 📊 Throughput analysis
 
 ### Full Benchmark Suite
 
@@ -224,12 +189,12 @@ pip uninstall tensorflow
 pip install intel-tensorflow==2.20.0
 
 # Test performance improvement
-python3 scripts/benchmark_xla_mixed_precision.py --model-type bert_base --num-runs 30
+python3 scripts/benchmark_xla_mixed_precision.py --model-type mobilenet_v2 --num-runs 30
 ```
 
 **Expected Performance Gains:**
-- BERT-Base inference: 1.7-3.4x faster
 - MobileNetV2 inference: 1.8-3.8x faster
+- ResNet50 inference: 1.5-3.0x faster
 - Matrix operations: 2.0-4.0x faster (with AVX512)
 
 **Build from Source (Maximum Performance):**
@@ -322,38 +287,6 @@ dataset:
 
 ## 🎯 Usage
 
-### BERT Model Benchmarks (NEW!)
-
-**Quick BERT Comparison**:
-```bash
-# Compare BERT base vs quantized vs ONNX models
-python3 scripts/benchmark_bert_comparison.py --mode quick
-
-# Test specific model
-python3 scripts/benchmark_bert_comparison.py \
-    --model bert-base-uncased \
-    --mode standard \
-    --batch-size 1
-
-# Test DistilBERT
-python3 scripts/benchmark_bert_comparison.py \
-    --model distilbert-base-uncased \
-    --mode standard
-```
-
-**What Gets Tested**:
-- ✅ **Base Model**: TensorFlow baseline (no optimizations)
-- ✅ **Quantized Models**: TFLite INT8, Float16, Dynamic Range
-- ✅ **ONNX Models**: ONNX Runtime with default and optimized settings
-
-**Results Include**:
-- Latency comparison (mean, p50, p95, p99)
-- Throughput metrics
-- Speedup vs baseline
-- Model size analysis
-
-See [BERT_BENCHMARK_GUIDE.md](BERT_BENCHMARK_GUIDE.md) for details.
-
 ### Full Benchmark Suite
 
 **Run All Models + All Engines**:
@@ -369,11 +302,10 @@ See [BERT_BENCHMARK_GUIDE.md](BERT_BENCHMARK_GUIDE.md) for details.
 ```
 
 **What Gets Tested**:
-1. BERT models (base, quantized, ONNX)
-2. Image models (MobileNetV2, ResNet50, EfficientNetB0)
-3. Additional text models (RoBERTa)
-4. Batch size analysis
-5. Consolidated reporting
+1. Image models（MobileNetV2、ResNet50、EfficientNetB0 等）
+2. 多引擎配置（TensorFlow / TFLite / ONNX Runtime / OpenVINO）
+3. 批量大小与量化策略分析
+4. 统一报告生成（HTML / Markdown / 图表）
 
 ### Basic Usage
 
@@ -546,13 +478,6 @@ pytest tests/test_config.py -v
 docker build --build-arg PYPI_MIRROR=https://pypi.tuna.tsinghua.edu.cn/simple .
 ```
 
-**Q: HuggingFace dataset download is slow**
-
-```bash
-# Set HuggingFace mirror
-export HF_ENDPOINT=https://hf-mirror.com
-```
-
 **Q: OpenVINO not working on ARM64**
 
 This is expected. OpenVINO only supports x86_64 architecture.
@@ -570,69 +495,6 @@ batch_sizes: [1, 4, 8]  # Instead of [1, 4, 8, 16, 32]
 ```bash
 chmod +x scripts/*.sh
 ```
-
-### Known Issues with BERT Benchmark
-
-#### ✅ FIXED: TensorFlow Hub KerasLayer Compatibility (TF 2.20)
-
-**Original Issue**: `scripts/bert_tf_vs_onnx.py` failed with KerasTensor conversion error in TensorFlow 2.20
-
-**Status**: ✅ **RESOLVED**
-
-**Solution**: Script updated to use SavedModel format instead of KerasLayer
-- Old approach: `hub.KerasLayer()` → KerasTensor error
-- New approach: `tf.saved_model.load()` → Direct serving signature
-
-**Usage**: See [BERT TensorFlow vs ONNX Direct Comparison](#bert-tensorflow-vs-onnx-direct-comparison-new) section above
-
----
-
-#### Issue 1: TensorFlow Engine - Model Type Check Error
-
-**File**: `src/engines/tensorflow_engine.py:84-102`
-
-**Error**:
-```
-Invalid model_path type: TFBertForSequenceClassification.
-Expected str or tf.keras.Model
-```
-
-**Root Cause**: HuggingFace transformers models are not direct instances of `tf.keras.Model`
-
-**Fix**:
-```python
-# In src/engines/tensorflow_engine.py line 84
-# Change:
-if isinstance(model_path, tf.keras.Model):
-
-# To:
-if hasattr(model_path, '__call__') and hasattr(model_path, 'predict'):
-```
-
-#### Issue 2: TFLite INT8 Quantization - Representative Dataset Error
-
-**Error**:
-```
-TFLite conversion failed: object of type 'function' has no len()
-```
-
-**Root Cause**: Representative dataset generator function usage incorrect
-
-**Status**: Investigating calibration data format
-
-#### Issue 3: ONNX Runtime - NumPy Version Compatibility
-
-**Error**:
-```
-module 'numpy' has no attribute 'object'.
-`np.object` was a deprecated alias for the builtin `object`.
-```
-
-**Root Cause**: NumPy 1.20+ deprecated `np.object`, incompatible with older tf2onnx versions
-
-**Solution**:
-- Update tf2onnx to latest version, or
-- Downgrade NumPy to < 1.20 (may affect other packages)
 
 ### Testing Environment
 

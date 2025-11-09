@@ -9,6 +9,7 @@ Usage:
     python3 scripts/demo_bert_tf_only.py
 """
 
+import os
 import time
 from pathlib import Path
 
@@ -33,6 +34,11 @@ NUM_TEST = 20
 output_dir = Path("./results/bert_tf_demo")
 output_dir.mkdir(parents=True, exist_ok=True)
 
+# 配置 TF Hub 缓存目录
+tfhub_cache_dir = Path.home() / ".cache" / "tfhub"
+os.environ.setdefault("TFHUB_CACHE_DIR", str(tfhub_cache_dir))
+tfhub_cache_dir.mkdir(parents=True, exist_ok=True)
+
 print("加载TensorFlow BERT模型（从TensorFlow Hub）...")
 print("模型: bert_en_uncased_L-12_H-768_A-12")
 
@@ -42,7 +48,8 @@ bert_model_url = "https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/4
 
 try:
     # 加载预训练的BERT模型
-    bert_layer = hub.KerasLayer(bert_model_url, trainable=False)
+    bert_module = hub.load(bert_model_url)
+    signature = bert_module.signatures["serving_default"]
     print("✓ BERT模型加载成功")
 
     # 创建一个简单的分类模型
@@ -55,21 +62,23 @@ try:
     )
 
     # BERT编码
-    bert_inputs = {
-        "input_word_ids": input_word_ids,
-        "input_mask": input_mask,
-        "input_type_ids": input_type_ids,
-    }
+    def bert_forward(inputs):
+        word_ids, mask, type_ids = inputs
+        outputs = signature(
+            input_word_ids=tf.cast(word_ids, tf.int32),
+            input_mask=tf.cast(mask, tf.int32),
+            input_type_ids=tf.cast(type_ids, tf.int32),
+        )
+        return outputs["bert_encoder"]
 
-    bert_outputs = bert_layer(bert_inputs)
-    pooled_output = bert_outputs["pooled_output"]
+    pooled_output = tf.keras.layers.Lambda(bert_forward)([input_word_ids, input_mask, input_type_ids])
 
     # 添加分类层
     output = tf.keras.layers.Dense(2, activation="softmax")(pooled_output)
 
     model = tf.keras.Model(inputs=[input_word_ids, input_mask, input_type_ids], outputs=output)
 
-print("✓ 模型构建完成")
+    print("✓ 模型构建完成")
     print(f"  参数总数: {model.count_params():,}")
 
     # 创建模拟测试数据
@@ -133,8 +142,8 @@ print("✓ 模型构建完成")
         "throughput_samples_per_sec": NUM_TEST / np.sum(latencies_np) * 1000,
     }
 
-print("\n✓ 测试完成!")
-print("\n结果:")
+    print("\n✓ 测试完成!")
+    print("\n结果:")
     print(f"  延迟 (mean):   {results['latency_mean']:.2f} ms")
     print(f"  延迟 (median): {results['latency_median']:.2f} ms")
     print(f"  延迟 (p95):    {results['latency_p95']:.2f} ms")

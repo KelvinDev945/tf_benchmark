@@ -42,6 +42,7 @@ skip = [
 known_first_party = ["src"]
 known_third_party = [
     "tensorflow",
+    "tensorflow_hub",
     "numpy",
     "pandas",
     "matplotlib",
@@ -49,8 +50,6 @@ known_third_party = [
     "yaml",
     "click",
     "rich",
-    "transformers",
-    "datasets",
 ]
 
 [tool.pytest.ini_options]
@@ -120,8 +119,6 @@ show_error_context = true
 [[tool.mypy.overrides]]
 module = [
     "tensorflow.*",
-    "transformers.*",
-    "datasets.*",
     "onnx.*",
     "onnxruntime.*",
     "openvino.*",

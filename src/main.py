@@ -9,8 +9,14 @@ from pathlib import Path
 
 import click
 
-from .benchmark import BenchmarkRunner
-from .config import ConfigLoader
+if __package__ is None or __package__ == "":
+    # Allow running as a script via `python src/main.py`
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from benchmark import BenchmarkRunner
+    from config import ConfigLoader
+else:
+    from .benchmark import BenchmarkRunner
+    from .config import ConfigLoader
 
 
 @click.command()

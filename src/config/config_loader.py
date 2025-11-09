@@ -150,8 +150,9 @@ class ConfigLoader:
             raise ValueError("Missing 'models' section in configuration")
 
         models = self.config["models"]
-        if not models.get("image") and not models.get("text"):
-            raise ValueError("At least one model type (image or text) must be specified")
+        image_models = models.get("image", [])
+        if not image_models:
+            raise ValueError("At least one image model must be specified")
 
         # Validate batch sizes
         if "batch_sizes" not in self.config:
@@ -280,7 +281,9 @@ class ConfigLoader:
             mode_config["dataset"]["image"]["num_samples"] = mode_settings["num_samples_image"]
 
         if "num_samples_text" in mode_settings:
-            mode_config["dataset"]["text"]["num_samples"] = mode_settings["num_samples_text"]
+            text_dataset = mode_config.get("dataset", {}).get("text")
+            if isinstance(text_dataset, dict):
+                text_dataset["num_samples"] = mode_settings["num_samples_text"]
 
         return mode_config
 
