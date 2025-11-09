@@ -3,8 +3,10 @@
 ## 📋 问题概述
 
 **脚本**: `scripts/bert_tf_vs_onnx.py`
-**状态**: ❌ 在TensorFlow 2.20中失败
-**错误类型**: KerasTensor兼容性问题
+**状态**: ✅ 已修复（SavedModel 流程）
+**错误类型**: 历史 KerasTensor 兼容性问题
+
+> 2025-11-09 更新：脚本已改为使用 SavedModel 直接加载并通过 `scripts/test_tf_engine_fix.py` 验证。以下内容保留旧版失败原因与排查记录，便于后续参考。
 
 ---
 

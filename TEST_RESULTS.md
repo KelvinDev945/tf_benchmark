@@ -193,18 +193,18 @@ hasattr(model, 'predict')     # 有预测方法
 
 ### 主测试脚本
 
-**文件**: `test_standalone.py`
+**文件**: `scripts/test_tf_engine_fix.py`
 
 运行方式:
 ```bash
-python3 test_standalone.py
+python3 scripts/test_tf_engine_fix.py
 ```
 
 特点:
 - 不依赖其他引擎（ONNX, TFLite等）
 - 完全独立，易于运行
 - 包含模拟 Transformers 模型的测试
-- 验证代码修复的正确性
+- 验证类型检查修复的正确性
 
 ### Docker 环境测试
 
@@ -215,7 +215,7 @@ python3 test_standalone.py
 docker run --rm \
   -v $(pwd):/app \
   tf-cpu-benchmark:latest \
-  scripts/test_tf_engine_fix.py
+  python3 scripts/test_tf_engine_fix.py
 ```
 
 **详细指南**: 参见 `DOCKER_TEST_GUIDE.md`

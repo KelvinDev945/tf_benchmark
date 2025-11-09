@@ -211,7 +211,7 @@ Fastest Configuration: tflite_int8
 
 ### Custom Configuration
 
-Edit `configs/bert_benchmark_config.yaml` to customize:
+默认使用 `configs/benchmark_config.yaml` 中的设置，可按需调整或通过命令行覆盖：
 
 ```yaml
 # Example: Faster testing
@@ -269,7 +269,7 @@ docker run --rm -v $(pwd)/results:/app/results \
 **Solution**: Reduce batch size or number of samples
 
 ```yaml
-# In configs/bert_benchmark_config.yaml
+# In configs/benchmark_config.yaml
 batch_sizes: [1, 4]  # Remove larger batch sizes
 dataset:
   text:

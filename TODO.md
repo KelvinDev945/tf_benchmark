@@ -167,6 +167,11 @@ module 'numpy' has no attribute 'object'.
 **状态**: ❌ 未修复
 
 ---
+### 4, 是否需要根据cpu型号rebuild tensorflow来获得最佳性能
+因为如下log
+I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+
 
 ## 🟢 低优先级 - 优化和增强
 
@@ -566,7 +571,7 @@ Loading a PyTorch model in TensorFlow, requires both PyTorch and TensorFlow to b
 - [x] **修复 BERT TF 2.20 兼容性问题**
   - 将 `scripts/bert_tf_vs_onnx.py` 修复为使用 SavedModel 方式
   - 避免了 KerasLayer 的 KerasTensor 转换错误
-  - 备份原始脚本到 `scripts/bert_tf_vs_onnx.py.backup`
+  - 清理旧版备份脚本（原 `scripts/bert_tf_vs_onnx.py.backup`）
 
 - [x] **Docker 环境测试成功**
   - 在 Docker 容器中成功运行 BERT TensorFlow 测试
