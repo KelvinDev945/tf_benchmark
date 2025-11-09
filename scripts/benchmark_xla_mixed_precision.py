@@ -134,6 +134,33 @@ def create_bert_model(model_size="lite", seq_length=128, vocab_size=10000):
     return model, model_name, hidden_size, num_hidden_layers, num_attention_heads
 
 
+def create_mobilenet_model(input_shape=(224, 224, 3), num_classes=1000):
+    """创建MobileNetV2模型"""
+    print_section("创建MobileNetV2模型")
+    print(f"配置:")
+    print(f"  输入形状: {input_shape}")
+    print(f"  类别数: {num_classes}")
+
+    # 使用TensorFlow预训练的MobileNetV2
+    base_model = tf.keras.applications.MobileNetV2(
+        input_shape=input_shape,
+        include_top=False,
+        weights=None  # 不使用预训练权重以加快测试速度
+    )
+
+    # 添加分类头
+    model = tf.keras.Sequential([
+        base_model,
+        tf.keras.layers.GlobalAveragePooling2D(),
+        tf.keras.layers.Dense(num_classes, activation='softmax')
+    ], name='mobilenet_v2')
+
+    print(f"\n✓ MobileNetV2模型创建完成")
+    print(f"  总参数: {model.count_params():,}")
+
+    return model, "MobileNetV2", None, None, None
+
+
 def create_test_model(model_type="cnn", input_shape=(28, 28, 1), num_classes=10):
     """创建测试模型"""
     print_section(f"创建测试模型: {model_type}")
@@ -145,6 +172,10 @@ def create_test_model(model_type="cnn", input_shape=(28, 28, 1), num_classes=10)
     elif model_type == "bert_base":
         # BERT-Base模型
         return create_bert_model(model_size="base", seq_length=128, vocab_size=10000)
+
+    elif model_type == "mobilenet":
+        # MobileNetV2模型
+        return create_mobilenet_model(input_shape=(224, 224, 3), num_classes=1000)
 
     elif model_type == "cnn":
         model = tf.keras.Sequential([
@@ -569,7 +600,8 @@ def generate_report(env_info, model_info, baseline_results, xla_results,
 
 def main():
     parser = argparse.ArgumentParser(description="TensorFlow XLA + 混合精度性能测试")
-    parser.add_argument("--model-type", default="cnn", choices=["cnn", "resnet_like", "bert_lite", "bert_base"],
+    parser.add_argument("--model-type", default="cnn",
+                       choices=["cnn", "resnet_like", "bert_lite", "bert_base", "mobilenet"],
                        help="模型类型")
     parser.add_argument("--output-dir", default="results/xla_mixed_precision",
                        help="输出目录")
@@ -592,6 +624,7 @@ def main():
 
     # 根据模型类型设置参数
     is_bert_model = (args.model_type in ["bert_lite", "bert_base"])
+    is_mobilenet = (args.model_type == "mobilenet")
 
     if is_bert_model:
         # BERT模型参数
@@ -607,6 +640,18 @@ def main():
             "隐藏层大小": hidden_size,
             "Transformer层数": num_layers,
             "注意力头数": num_heads,
+            "类别数": num_classes,
+            "参数总数": f"{model.count_params():,}"
+        }
+    elif is_mobilenet:
+        # MobileNet模型参数
+        input_shape = (224, 224, 3)
+        num_classes = 1000
+        model, model_name, _, _, _ = create_test_model(args.model_type, input_shape, num_classes)
+
+        model_info = {
+            "模型类型": model_name,
+            "输入形状": str(input_shape),
             "类别数": num_classes,
             "参数总数": f"{model.count_params():,}"
         }
