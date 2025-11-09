@@ -43,6 +43,16 @@ If you see references to BERT or Transformers models in the codebase, these are 
 - DistilBERT (base-uncased)
 - BERT (base-uncased)
 
+### Benchmark Testing Requirements
+
+**所有benchmark测试必须同时测试bert-base和mobilenet模型**
+
+All benchmark tests MUST include both BERT-Base and MobileNet models to ensure comprehensive performance evaluation across different model architectures:
+- **BERT-Base**: Represents transformer-based NLP models with ~110M parameters
+- **MobileNet**: Represents efficient CNN-based vision models optimized for mobile/edge devices
+
+This requirement ensures that all optimization techniques (XLA, mixed precision, quantization, ONNX conversion) are validated on both model types.
+
 ## 🚀 Quick Start
 
 ### BERT Model Comparison (NEW!)
@@ -199,6 +209,61 @@ pip install openvino==2023.2.0 openvino-dev==2023.2.0
 ```bash
 python src/main.py --config configs/benchmark_config.yaml --mode standard
 ```
+
+### Option 3: CPU-Optimized TensorFlow (Best Performance)
+
+**⚡ 获得2-4倍性能提升！**
+
+The default TensorFlow pip package is a generic build. For optimal CPU performance, compile TensorFlow from source with CPU-specific optimizations.
+
+**Quick Start - Intel Optimized TensorFlow:**
+
+```bash
+# Easiest option: Use Intel's pre-optimized build
+pip uninstall tensorflow
+pip install intel-tensorflow==2.20.0
+
+# Test performance improvement
+python3 scripts/benchmark_xla_mixed_precision.py --model-type bert_base --num-runs 30
+```
+
+**Expected Performance Gains:**
+- BERT-Base inference: 1.7-3.4x faster
+- MobileNetV2 inference: 1.8-3.8x faster
+- Matrix operations: 2.0-4.0x faster (with AVX512)
+
+**Build from Source (Maximum Performance):**
+
+For maximum performance, compile TensorFlow with your CPU's specific instruction sets (AVX2, AVX512, FMA):
+
+```bash
+# See detailed guide
+cat TENSORFLOW_CPU_OPTIMIZATION.md
+
+# Quick example for AVX512 CPUs:
+git clone https://github.com/tensorflow/tensorflow.git
+cd tensorflow
+./configure
+bazel build --config=opt \
+    --config=mkl \
+    --copt=-march=native \
+    --copt=-mavx512f \
+    //tensorflow/tools/pip_package:build_pip_package
+```
+
+📖 **Full Guide**: See [TENSORFLOW_CPU_OPTIMIZATION.md](TENSORFLOW_CPU_OPTIMIZATION.md) for:
+- CPU instruction set detection
+- Platform-specific build commands (Intel/AMD/ARM)
+- Docker-based compilation
+- Performance benchmarking before/after
+- Troubleshooting
+
+**When to Use CPU-Optimized TensorFlow:**
+- ✅ Production deployments requiring maximum CPU performance
+- ✅ Training workloads on CPU servers
+- ✅ When you control the deployment hardware
+- ❌ Cross-platform distribution (use generic build)
+- ❌ Quick prototyping (use ONNX Runtime instead)
 
 ## 🔧 Configuration
 
