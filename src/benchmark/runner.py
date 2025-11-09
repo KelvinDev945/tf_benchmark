@@ -332,7 +332,7 @@ class BenchmarkRunner:
             return
 
         try:
-            from reporting import DataProcessor, BenchmarkVisualizer, ReportGenerator
+            from reporting import DataProcessor, ReportGenerator
 
             print("\n📊 Generating reports...")
 
@@ -340,11 +340,6 @@ class BenchmarkRunner:
             processor = DataProcessor()
             # Note: DataProcessor expects results in a specific format
             # This is a simplified version
-
-            # Generate visualizations
-            visualizer = BenchmarkVisualizer()
-            plots_dir = self.results_dir / "plots"
-            plots_dir.mkdir(exist_ok=True)
 
             # Generate reports
             generator = ReportGenerator()

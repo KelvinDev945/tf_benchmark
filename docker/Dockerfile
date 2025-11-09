@@ -73,9 +73,7 @@ RUN chmod -R 755 /app
 
 # Verify installations
 RUN python3 -c "import tensorflow as tf; print(f'TensorFlow version: {tf.__version__}')" && \
-    python3 -c "import onnxruntime as ort; print(f'ONNX Runtime version: {ort.__version__}')" && \
-    python3 -c "import transformers; print(f'Transformers version: {transformers.__version__}')" && \
-    python3 -c "import datasets; print(f'Datasets version: {datasets.__version__}')"
+    python3 -c "import onnxruntime as ort; print(f'ONNX Runtime version: {ort.__version__}')"
 
 # Verify OpenVINO (x86_64 only)
 RUN if [ "$TARGETARCH" = "amd64" ]; then \

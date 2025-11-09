@@ -22,10 +22,6 @@ scipy>=1.11.0  # Used by metrics.py for statistical analysis
 # Data Processing and Analysis
 pandas>=2.0.0
 
-# Visualization
-matplotlib>=3.7.0
-seaborn>=0.12.0
-
 # Configuration Management
 pyyaml>=6.0
 
