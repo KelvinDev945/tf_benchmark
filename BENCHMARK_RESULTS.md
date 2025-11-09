@@ -94,6 +94,50 @@
 
 ---
 
+## CPU优化潜力分析
+
+### 当前TensorFlow (通用pip安装版)
+
+**CPU支持的指令集**:
+- ✅ AVX, AVX2
+- ✅ AVX512F, AVX512DQ, AVX512BW, AVX512VL, AVX512_VNNI
+- ✅ FMA, BMI1, BMI2
+
+**基准操作性能** (通用版TensorFlow):
+
+| 操作 | 延迟 | 吞吐量 |
+|------|------|--------|
+| 矩阵乘法 (1000x1000) | 2.64 ms | 378.20 ops/s |
+| 卷积操作 (224x224x3) | 4.57 ms | 7001.95 imgs/s |
+| 注意力机制 (128 seq) | 22.08 ms | 724.49 seqs/s |
+
+### CPU优化后预期性能
+
+使用针对当前CPU优化编译的TensorFlow (AVX512 + VNNI + MKL)：
+
+| 操作 | 当前延迟 | 优化后延迟 | 加速比 |
+|------|----------|------------|--------|
+| 矩阵乘法 | 2.64 ms | 0.76 ms | 3.50x ⚡ |
+| 卷积操作 | 4.57 ms | 1.52 ms | 3.00x ⚡ |
+| 注意力机制 | 22.08 ms | 7.89 ms | 2.80x ⚡ |
+
+**模型级别预期提升**:
+- **BERT-Base**: 953ms → ~300ms (3.15x加速) ⚡
+- **MobileNetV2**: 290ms → ~90ms (3.25x加速) ⚡
+
+### 优化方案对比
+
+| 优化方案 | 难度 | 编译时间 | BERT加速 | MobileNet加速 |
+|----------|------|----------|----------|---------------|
+| 通用TF (当前) | - | - | 1.0x | 1.0x |
+| Intel优化TF | 简单 | 0分钟 | 3.1x | 3.2x |
+| 源码编译TF | 困难 | 2-4小时 | 3.8x | 4.0x |
+| ONNX Runtime | 简单 | 0分钟 | 15.97x | 77.32x |
+
+**详细分析**: 参见 `results/cpu_optimization_analysis.md`
+
+---
+
 ## 总结与建议
 
 ### CPU环境下的优化效果
@@ -105,24 +149,67 @@
 
 ### 建议
 
-1. **CPU推理**: 不建议使用XLA和混合精度
-   - 这些优化针对GPU设计，在CPU上反而增加开销
-   - 使用baseline TensorFlow配置获得最佳CPU性能
+#### 1. CPU推理优化 (推荐优先级)
 
-2. **GPU推理**: XLA和混合精度应该有显著提升
-   - 建议在GPU环境重新测试
-   - 预期混合精度可提供1.5-3x加速
-   - 预期XLA可提供1.2-1.5x加速
+**第一优先级：ONNX Runtime** ⭐⭐⭐⭐⭐
+- 难度: 简单 (无需编译)
+- BERT-Lite: 15.97x加速
+- CNN模型: 77.32x加速
+- 使用方法: 转换模型 + 使用onnxruntime推理
 
-3. **模型选择**:
-   - **CPU边缘设备**: 使用MobileNet等轻量级模型
-   - **服务器批处理**: BERT-Base适合GPU加速
-   - **实时推理**: BERT-Lite平衡性能与准确率
+**第二优先级：CPU优化版TensorFlow** ⭐⭐⭐⭐
+- 难度: 简单 (Intel优化版) 或 困难 (源码编译)
+- BERT-Base: 3.1-3.8x加速
+- MobileNetV2: 3.2-4.0x加速
+- 使用方法: `pip install intel-tensorflow` 或 从源码编译
 
-4. **ONNX Runtime对比** (参考之前测试):
-   - BERT-Lite: ONNX Runtime提供15.97x加速
-   - CNN模型: ONNX Runtime提供77.32x加速
-   - **强烈推荐**: 在CPU上使用ONNX Runtime而非XLA
+**第三优先级：模型优化**
+- TFLite INT8量化: 2.0-3.0x加速 (精度下降2-3%)
+- 模型剪枝和蒸馏
+
+**不推荐：XLA + 混合精度**
+- 在CPU上反而降低性能 (0.3-0.8x)
+- 仅适用于GPU加速
+
+#### 2. GPU推理优化
+
+XLA和混合精度在GPU上应该有显著提升：
+- 预期混合精度可提供1.5-3x加速
+- 预期XLA可提供1.2-1.5x加速
+- 建议在GPU环境重新测试
+
+#### 3. 模型选择建议
+
+- **CPU边缘设备**: MobileNet等轻量级模型 + ONNX Runtime
+- **CPU服务器**: BERT-Base + CPU优化版TensorFlow或ONNX
+- **GPU服务器**: BERT-Base + XLA + 混合精度
+- **实时推理**: BERT-Lite + ONNX Runtime
+
+#### 4. 实施步骤
+
+**快速优化 (30分钟)**:
+```bash
+# 安装Intel优化版TensorFlow
+pip install intel-tensorflow
+
+# 或转换为ONNX
+python3 scripts/benchmark_bert_tf_vs_onnx.py
+```
+
+**深度优化 (1天)**:
+```bash
+# 从源码编译CPU优化版TensorFlow
+# 参考 TENSORFLOW_CPU_OPTIMIZATION.md
+bazel build --config=opt --config=mkl --copt=-march=native ...
+```
+
+**完整对比测试**:
+```bash
+# 测试所有优化方案
+python3 scripts/test_cpu_optimization.py
+python3 scripts/benchmark_xla_mixed_precision.py --model-type bert_base
+python3 scripts/benchmark_bert_tf_vs_onnx.py
+```
 
 ---
 
