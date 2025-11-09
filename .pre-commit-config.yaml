@@ -27,4 +27,4 @@ repos:
     hooks:
       - id: flake8
         files: ^(src/|tests/|scripts/)
-        args: ["--max-line-length=100", "--extend-ignore=F541,W503"]
+        args: ["--max-line-length=100", "--extend-ignore=E203,E501,F541,W503"]

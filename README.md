@@ -161,8 +161,8 @@ docker run --rm \
 git clone https://github.com/yourusername/tf-cpu-benchmark.git
 cd tf-cpu-benchmark
 
-# Create virtual environment
-python3.11 -m venv venv
+# Create virtual environment (Python 3.10 recommended for TensorFlow 2.15)
+python3.10 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install runtime dependencies

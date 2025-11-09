@@ -3,7 +3,7 @@
 # TensorFlow Multi-Engine CPU Inference Benchmark
 # Multi-architecture Dockerfile (x86_64 and ARM64)
 
-ARG PYTHON_VERSION=3.11
+ARG PYTHON_VERSION=3.10
 ARG ENABLE_OPENVINO=false
 
 FROM python:${PYTHON_VERSION}-slim AS builder
@@ -89,6 +89,24 @@ RUN mkdir -p /app/src /app/configs /app/results /app/models /app/data && \
 # Copy source code and configs
 COPY src/ /app/src/
 COPY configs/ /app/configs/
+
+# Verify installations
+RUN python -c "import tensorflow as tf; print(f'TensorFlow version: {tf.__version__}')" && \
+    python -c "import onnxruntime as ort; print(f'ONNX Runtime version: {ort.__version__}')"
+
+# Verify OpenVINO (x86_64 only, if enabled)
+RUN if [ "$TARGETARCH" = "amd64" ] && [ "$ENABLE_OPENVINO" = "true" ]; then \
+        python -c "from openvino.runtime import Core; print(f'OpenVINO available: True')"; \
+    else \
+        echo "OpenVINO verification skipped"; \
+    fi
+
+# Display system information
+RUN python -c "import platform; import psutil; \
+    print(f'Platform: {platform.platform()}'); \
+    print(f'Architecture: {platform.machine()}'); \
+    print(f'CPU count: {psutil.cpu_count()}'); \
+    print(f'Total memory: {psutil.virtual_memory().total / (1024**3):.2f} GB')"
 
 # Entrypoint executes inside the virtual environment
 ENTRYPOINT ["python"]

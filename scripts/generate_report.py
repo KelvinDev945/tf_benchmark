@@ -14,7 +14,7 @@ import click
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from reporting import BenchmarkVisualizer, DataProcessor, ReportGenerator
+from reporting import DataProcessor, ReportGenerator
 
 
 @click.command()
@@ -57,29 +57,18 @@ def main(results_dir, output_dir, format):
         print(f"✗ Error loading results: {e}")
         return 1
 
-    # Step 2: Generate visualizations
-    print("\n📈 Generating visualizations...")
-    visualizer = BenchmarkVisualizer()
-    plots_dir = output_dir / "plots"
-
-    try:
-        plots = visualizer.generate_all_plots(data, plots_dir)
-    except Exception as e:
-        print(f"✗ Error generating plots: {e}")
-        plots = []
-
-    # Step 3: Generate reports
-    print("\n📝 Generating reports...")
+    # Step 2: Generate reports
+    print(f"\n📝 Generating reports...")
     generator = ReportGenerator()
 
     try:
         if format in ["html", "both"]:
             html_path = output_dir / "report.html"
-            generator.generate_html_report(data, plots, html_path)
+            generator.generate_html_report(data, [], html_path)
 
         if format in ["markdown", "both"]:
             md_path = output_dir / "report.md"
-            generator.generate_markdown_report(data, plots, md_path)
+            generator.generate_markdown_report(data, [], md_path)
 
         # Always generate recommendations
         rec_path = output_dir / "recommendations.txt"
@@ -89,8 +78,8 @@ def main(results_dir, output_dir, format):
         print(f"✗ Error generating reports: {e}")
         return 1
 
-    # Step 4: Export summary CSV
-    print("\n💾 Exporting summary...")
+    # Step 3: Export summary CSV
+    print(f"\n💾 Exporting summary...")
     try:
         csv_path = output_dir / "summary.csv"
         processor.export_summary_csv(csv_path)
@@ -102,11 +91,10 @@ def main(results_dir, output_dir, format):
     print("✓ Report Generation Complete!")
     print("=" * 70)
     print(f"\n📁 Output directory: {output_dir}")
-    print("   - HTML report: report.html")
-    print("   - Markdown report: report.md")
-    print("   - Recommendations: recommendations.txt")
-    print("   - Summary CSV: summary.csv")
-    print(f"   - Plots: plots/ ({len(plots)} files)")
+    print(f"   - HTML report: report.html")
+    print(f"   - Markdown report: report.md")
+    print(f"   - Recommendations: recommendations.txt")
+    print(f"   - Summary CSV: summary.csv")
     print()
 
     return 0
