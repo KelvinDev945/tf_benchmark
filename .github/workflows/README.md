@@ -13,7 +13,7 @@ This directory contains automated CI/CD workflows for the TensorFlow Benchmark p
 - Pull requests targeting `main` or `develop`
 
 **What it does**:
-- ✅ Runs unit tests on Python 3.11 and 3.12
+- ✅ Runs unit tests on Python 3.11
 - ✅ Generates code coverage reports (XML, HTML, terminal)
 - ✅ Uploads coverage to Codecov (requires `CODECOV_TOKEN` secret)
 - ✅ Creates coverage artifacts for download
@@ -130,7 +130,7 @@ The CI workflow uses a matrix strategy to test multiple Python versions:
 
 ```yaml
 matrix:
-  python-version: ["3.11", "3.12"]
+  python-version: ["3.11"]
 ```
 
 To add more versions, edit the matrix in `ci.yml`.

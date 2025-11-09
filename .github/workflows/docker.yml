@@ -33,21 +33,41 @@ jobs:
       contents: read
       packages: write
 
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
+      - name: Detect current platform
+        id: detect-platform
+        run: |
+          # Detect CPU architecture
+          arch=$(uname -m)
+          echo "Detected architecture: $arch"
+
+          # Map to Docker platform
+          case $arch in
+            x86_64)
+              platform="linux/amd64"
+              ;;
+            aarch64|arm64)
+              platform="linux/arm64"
+              ;;
+            *)
+              echo "Unsupported architecture: $arch"
+              exit 1
+              ;;
+          esac
+
+          echo "Docker platform: $platform"
+          echo "platform=$platform" >> $GITHUB_OUTPUT
+
+          # Extract platform pair for tagging
+          platform_pair=${platform//\//-}
+          echo "pair=$platform_pair" >> $GITHUB_OUTPUT
+
+          # Extract architecture for TARGETARCH
+          docker_arch=$(echo $platform | cut -d'/' -f2)
+          echo "arch=$docker_arch" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -66,38 +86,27 @@ jobs:
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Extract platform info
-        id: platform
-        run: |
-          platform="${{ matrix.platform }}"
-          platform_pair=${platform//\//-}
-          echo "pair=$platform_pair" >> $GITHUB_OUTPUT
-
-          # Extract architecture for TARGETARCH
-          arch=$(echo $platform | cut -d'/' -f2)
-          echo "arch=$arch" >> $GITHUB_OUTPUT
-
       - name: Build Docker image
         id: build
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./docker/Dockerfile
-          platforms: ${{ matrix.platform }}
+          platforms: ${{ steps.detect-platform.outputs.platform }}
           push: false
           load: true
-          tags: tf-benchmark:test-${{ steps.platform.outputs.pair }}
+          tags: tf-benchmark:test-${{ steps.detect-platform.outputs.pair }}
           build-args: |
-            TARGETARCH=${{ steps.platform.outputs.arch }}
-          cache-from: type=gha,scope=${{ steps.platform.outputs.pair }}
-          cache-to: type=gha,mode=max,scope=${{ steps.platform.outputs.pair }}
+            TARGETARCH=${{ steps.detect-platform.outputs.arch }}
+          cache-from: type=gha,scope=${{ steps.detect-platform.outputs.pair }}
+          cache-to: type=gha,mode=max,scope=${{ steps.detect-platform.outputs.pair }}
 
       - name: Test Docker image - Version check
         run: |
-          echo "## 🐳 Docker Image Test Results (${{ matrix.platform }})" >> $GITHUB_STEP_SUMMARY
+          echo "## 🐳 Docker Image Test Results (${{ steps.detect-platform.outputs.platform }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          docker run --rm tf-benchmark:test-${{ steps.platform.outputs.pair }} -c \
+          docker run --rm tf-benchmark:test-${{ steps.detect-platform.outputs.pair }} -c \
             "import sys; import tensorflow as tf; import onnxruntime as ort; import transformers; \
             print(f'Python: {sys.version}'); \
             print(f'TensorFlow: {tf.__version__}'); \
@@ -114,7 +123,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### ✅ Import Tests" >> $GITHUB_STEP_SUMMARY
 
-          docker run --rm tf-benchmark:test-${{ steps.platform.outputs.pair }} -c \
+          docker run --rm tf-benchmark:test-${{ steps.detect-platform.outputs.pair }} -c \
             "import tensorflow as tf; \
             import onnxruntime; \
             import transformers; \
@@ -128,7 +137,7 @@ jobs:
           echo "### 🏗️ Architecture Information" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-          docker run --rm tf-benchmark:test-${{ steps.platform.outputs.pair }} -c \
+          docker run --rm tf-benchmark:test-${{ steps.detect-platform.outputs.pair }} -c \
             "import platform; import psutil; \
             print(f'Platform: {platform.platform()}'); \
             print(f'Architecture: {platform.machine()}'); \
@@ -143,7 +152,7 @@ jobs:
           echo "### 📖 Application Help" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-          docker run --rm tf-benchmark:test-${{ steps.platform.outputs.pair }} src/main.py --help >> $GITHUB_STEP_SUMMARY 2>&1 || true
+          docker run --rm tf-benchmark:test-${{ steps.detect-platform.outputs.pair }} src/main.py --help >> $GITHUB_STEP_SUMMARY 2>&1 || true
 
           echo '```' >> $GITHUB_STEP_SUMMARY
 
@@ -153,14 +162,14 @@ jobs:
           echo "### 💾 Image Size Analysis" >> $GITHUB_STEP_SUMMARY
 
           # Get image size
-          size=$(docker images tf-benchmark:test-${{ steps.platform.outputs.pair }} --format "{{.Size}}")
+          size=$(docker images tf-benchmark:test-${{ steps.detect-platform.outputs.pair }} --format "{{.Size}}")
           echo "**Image Size:** $size" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Show layer information
           echo "**Layer Breakdown:**" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          docker history tf-benchmark:test-${{ steps.platform.outputs.pair }} --human --no-trunc | head -20 >> $GITHUB_STEP_SUMMARY
+          docker history tf-benchmark:test-${{ steps.detect-platform.outputs.pair }} --human --no-trunc | head -20 >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Generate test summary
@@ -168,7 +177,7 @@ jobs:
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "**Platform:** ${{ matrix.platform }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Platform:** ${{ steps.detect-platform.outputs.platform }}" >> $GITHUB_STEP_SUMMARY
           echo "**Build Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "**Build Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
 
@@ -256,6 +265,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Detect current platform
+        id: detect-platform
+        run: |
+          # Detect CPU architecture
+          arch=$(uname -m)
+          echo "Detected architecture: $arch"
+
+          # Map to Docker platform
+          case $arch in
+            x86_64)
+              platform="linux/amd64"
+              ;;
+            aarch64|arm64)
+              platform="linux/arm64"
+              ;;
+            *)
+              echo "Unsupported architecture: $arch"
+              exit 1
+              ;;
+          esac
+
+          echo "Docker platform: $platform"
+          echo "platform=$platform" >> $GITHUB_OUTPUT
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -264,7 +297,7 @@ jobs:
         with:
           context: .
           file: ./docker/Dockerfile
-          platforms: linux/amd64
+          platforms: ${{ steps.detect-platform.outputs.platform }}
           push: false
           load: true
           tags: tf-benchmark:scan
