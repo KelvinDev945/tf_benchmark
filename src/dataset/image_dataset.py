@@ -10,8 +10,15 @@ from typing import Dict, Optional, Tuple
 
 import numpy as np
 import tensorflow as tf
-from datasets import load_dataset
 from PIL import Image
+
+try:
+    from datasets import load_dataset
+
+    HAS_DATASETS = True
+except ImportError:
+    HAS_DATASETS = False
+    load_dataset = None  # type: ignore
 
 
 class ImageDatasetLoader:
@@ -48,7 +55,14 @@ class ImageDatasetLoader:
 
         Raises:
             ValueError: If parameters are invalid
+            ImportError: If datasets library is not installed
         """
+        if not HAS_DATASETS:
+            raise ImportError(
+                "The 'datasets' library is required for ImageDatasetLoader. "
+                "Install it with: pip install datasets"
+            )
+
         self.dataset_name = dataset_name
         self.split = split
         self.num_samples = num_samples
@@ -67,14 +81,10 @@ class ImageDatasetLoader:
             raise ValueError(f"num_samples must be positive, got {self.num_samples}")
 
         if len(self.target_size) != 2:
-            raise ValueError(
-                f"target_size must be (height, width), got {self.target_size}"
-            )
+            raise ValueError(f"target_size must be (height, width), got {self.target_size}")
 
         if any(s <= 0 for s in self.target_size):
-            raise ValueError(
-                f"target_size dimensions must be positive, got {self.target_size}"
-            )
+            raise ValueError(f"target_size dimensions must be positive, got {self.target_size}")
 
     def load(self) -> "ImageDatasetLoader":
         """
@@ -130,9 +140,7 @@ class ImageDatasetLoader:
             "features": list(self.dataset.features.keys()),
         }
 
-    def preprocess(
-        self, image: Image.Image, normalize: bool = True
-    ) -> np.ndarray:
+    def preprocess(self, image: Image.Image, normalize: bool = True) -> np.ndarray:
         """
         Preprocess a single image.
 
@@ -177,9 +185,7 @@ class ImageDatasetLoader:
         elif "img" in batch:
             images = batch["img"]
         else:
-            raise ValueError(
-                f"Cannot find image field in batch. Available fields: {batch.keys()}"
-            )
+            raise ValueError(f"Cannot find image field in batch. Available fields: {batch.keys()}")
 
         # Preprocess all images in batch
         processed_images = []
@@ -236,9 +242,7 @@ class ImageDatasetLoader:
                 elif "img" in sample:
                     image = sample["img"]
                 else:
-                    raise ValueError(
-                        f"Cannot find image field. Available: {sample.keys()}"
-                    )
+                    raise ValueError(f"Cannot find image field. Available: {sample.keys()}")
 
                 # Preprocess
                 if isinstance(image, Image.Image):
@@ -254,9 +258,7 @@ class ImageDatasetLoader:
                     yield processed
 
         # Determine output signature
-        output_signature = (
-            tf.TensorSpec(shape=(*self.target_size, 3), dtype=tf.float32),
-        )
+        output_signature = (tf.TensorSpec(shape=(*self.target_size, 3), dtype=tf.float32),)
         if "label" in self.dataset.features:
             output_signature = (
                 tf.TensorSpec(shape=(*self.target_size, 3), dtype=tf.float32),
@@ -264,9 +266,7 @@ class ImageDatasetLoader:
             )
 
         # Create TensorFlow dataset
-        tf_dataset = tf.data.Dataset.from_generator(
-            generator, output_signature=output_signature
-        )
+        tf_dataset = tf.data.Dataset.from_generator(generator, output_signature=output_signature)
 
         # Shuffle if requested
         if shuffle:
@@ -318,9 +318,7 @@ class ImageDatasetLoader:
             elif "img" in batch:
                 images = batch["img"]
             else:
-                raise ValueError(
-                    f"Cannot find image field. Available: {batch.keys()}"
-                )
+                raise ValueError(f"Cannot find image field. Available: {batch.keys()}")
 
             # Preprocess
             processed_batch = []

@@ -5,7 +5,7 @@ This module provides functionality to collect and calculate
 performance metrics (latency, throughput, resource usage).
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 
@@ -201,7 +201,6 @@ class MetricsCollector:
         # Throughput confidence interval
         if self.total_time > 0:
             throughput = self.num_samples / self.total_time
-            throughput_std = np.std(1000.0 / latencies_array)  # Samples per second
             throughput_err = scipy_stats.sem(1000.0 / latencies_array)
             throughput_ci = scipy_stats.t.interval(
                 confidence_level,
@@ -240,8 +239,7 @@ class MetricsCollector:
             upper_bound = q3 + threshold * iqr
 
             outlier_indices = [
-                i for i, val in enumerate(latencies_array)
-                if val < lower_bound or val > upper_bound
+                i for i, val in enumerate(latencies_array) if val < lower_bound or val > upper_bound
             ]
 
         elif method == "zscore":
@@ -251,9 +249,7 @@ class MetricsCollector:
 
             if std > 0:
                 z_scores = np.abs((latencies_array - mean) / std)
-                outlier_indices = [
-                    i for i, z in enumerate(z_scores) if z > threshold
-                ]
+                outlier_indices = [i for i, z in enumerate(z_scores) if z > threshold]
 
         return outlier_indices
 

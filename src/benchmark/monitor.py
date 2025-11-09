@@ -145,14 +145,12 @@ class ResourceMonitor:
             "cpu_min": float(np.min(cpu_array)),
             "cpu_max": float(np.max(cpu_array)),
             "cpu_median": float(np.median(cpu_array)),
-
             # Memory statistics
             "memory_mean": float(np.mean(memory_array)),
             "memory_std": float(np.std(memory_array)),
             "memory_min": float(np.min(memory_array)),
             "memory_max": float(np.max(memory_array)),
             "memory_peak": float(np.max(memory_array)),
-
             # Sample count
             "num_samples": len(self.cpu_samples),
         }

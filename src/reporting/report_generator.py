@@ -7,7 +7,7 @@ Simplified version for Phase 5.
 
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
 import pandas as pd
 
@@ -66,9 +66,7 @@ class ReportGenerator:
 
         print(f"✓ Markdown report saved to {output_path}")
 
-    def generate_recommendations(
-        self, data: pd.DataFrame, output_path: Path
-    ) -> None:
+    def generate_recommendations(self, data: pd.DataFrame, output_path: Path) -> None:
         """
         Generate configuration recommendations.
 
@@ -84,9 +82,7 @@ class ReportGenerator:
 
         print(f"✓ Recommendations saved to {output_path}")
 
-    def _create_html_template(
-        self, data: pd.DataFrame, plots: List[Path]
-    ) -> str:
+    def _create_html_template(self, data: pd.DataFrame, plots: List[Path]) -> str:
         """Create HTML report template."""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -170,9 +166,7 @@ class ReportGenerator:
 """
         return html
 
-    def _create_markdown_template(
-        self, data: pd.DataFrame, plots: List[Path]
-    ) -> str:
+    def _create_markdown_template(self, data: pd.DataFrame, plots: List[Path]) -> str:
         """Create Markdown report template."""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 

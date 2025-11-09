@@ -78,7 +78,7 @@ def main(results_dir, output_dir, format):
         print(f"✗ Error generating reports: {e}")
         return 1
 
-    # Step 4: Export summary CSV
+    # Step 3: Export summary CSV
     print(f"\n💾 Exporting summary...")
     try:
         csv_path = output_dir / "summary.csv"

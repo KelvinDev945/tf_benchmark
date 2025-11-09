@@ -8,7 +8,7 @@ model loading, conversion, and testing support.
 import json
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import numpy as np
 
@@ -86,7 +86,7 @@ class BenchmarkRunner:
         # Warmup phase
         print(f"\nWarmup: {warmup_iterations} iterations...")
         for i in range(min(warmup_iterations, num_batches)):
-            batch_data = test_data[i*batch_size:(i+1)*batch_size]
+            batch_data = test_data[i * batch_size : (i + 1) * batch_size]
             try:
                 _ = engine_instance.infer(batch_data)
             except Exception as e:
@@ -104,7 +104,7 @@ class BenchmarkRunner:
             start_time = time.time()
 
             for i in range(num_batches):
-                batch_data = test_data[i*batch_size:(i+1)*batch_size]
+                batch_data = test_data[i * batch_size : (i + 1) * batch_size]
 
                 # Measure latency
                 iter_start = time.time()
@@ -153,7 +153,7 @@ class BenchmarkRunner:
             "timestamp": time.time(),
         }
 
-        print(f"\n✓ Benchmark completed")
+        print("\n✓ Benchmark completed")
         print(f"  Mean latency: {stats.get('latency_mean', 0):.2f} ms")
         print(f"  P95 latency: {stats.get('latency_p95', 0):.2f} ms")
         print(f"  Throughput: {stats.get('throughput_samples_per_sec', 0):.2f} samples/sec")
@@ -189,8 +189,8 @@ class BenchmarkRunner:
 
     def _run_quick_benchmark(self) -> List[Dict]:
         """Run a quick benchmark with minimal models/engines."""
-        from models import ModelLoader
-        from engines import TensorFlowEngine
+        from src.engines import TensorFlowEngine
+        from src.models import ModelLoader
 
         print("\n🔹 Quick benchmark: MobileNetV2 + TensorFlow baseline")
 
@@ -222,6 +222,7 @@ class BenchmarkRunner:
         except Exception as e:
             print(f"\n✗ Quick benchmark failed: {e}")
             import traceback
+
             traceback.print_exc()
 
         return self.results
@@ -362,6 +363,7 @@ class BenchmarkRunner:
         except Exception as e:
             print(f"⚠️  Report generation failed: {e}")
             import traceback
+
             traceback.print_exc()
 
     def __repr__(self) -> str:

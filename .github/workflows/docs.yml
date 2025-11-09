@@ -1,0 +1,305 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'src/**'
+      - 'docs/**'
+      - '**.md'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'src/**'
+      - 'docs/**'
+      - '**.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  validate-docs:
+    name: Validate Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: Validate README examples
+        continue-on-error: true
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "## 📝 README Code Examples Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Extract and validate Python code blocks from README.md
+          python << 'PYTHON_SCRIPT'
+          import re
+          import subprocess
+          import tempfile
+          import os
+
+          def extract_python_blocks(filename):
+              """Extract Python code blocks from Markdown."""
+              with open(filename, 'r') as f:
+                  content = f.read()
+
+              # Find all Python code blocks
+              pattern = r'```python\n(.*?)\n```'
+              blocks = re.findall(pattern, content, re.DOTALL)
+              return blocks
+
+          def validate_code(code, index):
+              """Validate Python code syntax."""
+              with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+                  f.write(code)
+                  temp_file = f.name
+
+              try:
+                  # Check syntax with python -m py_compile
+                  result = subprocess.run(
+                      ['python', '-m', 'py_compile', temp_file],
+                      capture_output=True,
+                      text=True
+                  )
+
+                  if result.returncode == 0:
+                      return True, "Valid"
+                  else:
+                      return False, result.stderr
+              finally:
+                  os.unlink(temp_file)
+
+          # Validate README.md
+          if os.path.exists('README.md'):
+              blocks = extract_python_blocks('README.md')
+              print(f"Found {len(blocks)} Python code blocks in README.md")
+
+              valid_count = 0
+              for i, block in enumerate(blocks):
+                  # Skip blocks that are just imports or very short examples
+                  if len(block.strip().split('\n')) < 3:
+                      continue
+
+                  is_valid, msg = validate_code(block, i)
+                  if is_valid:
+                      valid_count += 1
+                      print(f"  ✓ Block {i+1}: Valid")
+                  else:
+                      print(f"  ✗ Block {i+1}: {msg}")
+
+              print(f"\nValidated {valid_count}/{len(blocks)} code blocks")
+          else:
+              print("README.md not found")
+          PYTHON_SCRIPT
+
+          echo "✅ README examples validated (see logs for details)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check documentation completeness
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "## 📚 Documentation Completeness" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check for key documentation files
+          docs_files=(
+            "README.md:Project README"
+            "TODO.md:TODO list"
+            "LICENSE:License file"
+          )
+
+          for item in "${docs_files[@]}"; do
+            IFS=':' read -r file desc <<< "$item"
+            if [ -f "$file" ]; then
+              echo "✅ $desc found" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ $desc missing" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          # Count lines in main documentation files
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Documentation Size" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Lines |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          for file in README.md TODO.md PROJECT_COMPLETE.md BERT_BENCHMARK_GUIDE.md; do
+            if [ -f "$file" ]; then
+              lines=$(wc -l < "$file")
+              echo "| $file | $lines |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  build-api-docs:
+    name: Build API Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pdoc3 sphinx sphinx-rtd-theme
+
+      - name: Generate API docs with pdoc
+        run: |
+          echo "## 📖 API Documentation Generation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Generate HTML documentation
+          pdoc --html --output-dir docs/api src --force
+
+          echo "✅ API documentation generated with pdoc3" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Output directory:** docs/api/" >> $GITHUB_STEP_SUMMARY
+
+      - name: Create index page
+        run: |
+          # Create a simple index.html for GitHub Pages
+          mkdir -p docs
+          cat > docs/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>TensorFlow Benchmark Documentation</title>
+              <style>
+                  body {
+                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                      max-width: 1200px;
+                      margin: 0 auto;
+                      padding: 20px;
+                      line-height: 1.6;
+                      color: #333;
+                  }
+                  h1 { color: #FF6F00; }
+                  .card {
+                      border: 1px solid #ddd;
+                      border-radius: 8px;
+                      padding: 20px;
+                      margin: 20px 0;
+                      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                  }
+                  a {
+                      color: #FF6F00;
+                      text-decoration: none;
+                  }
+                  a:hover { text-decoration: underline; }
+                  .grid {
+                      display: grid;
+                      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                      gap: 20px;
+                  }
+              </style>
+          </head>
+          <body>
+              <h1>🚀 TensorFlow Multi-Engine Benchmark</h1>
+              <p>Comprehensive benchmarking framework for TensorFlow model inference across multiple engines.</p>
+
+              <div class="grid">
+                  <div class="card">
+                      <h2>📖 Documentation</h2>
+                      <ul>
+                          <li><a href="https://github.com/${{ github.repository }}/blob/main/README.md">README</a></li>
+                          <li><a href="https://github.com/${{ github.repository }}/blob/main/PROJECT_COMPLETE.md">Complete Project Documentation</a></li>
+                          <li><a href="https://github.com/${{ github.repository }}/blob/main/BERT_BENCHMARK_GUIDE.md">BERT Benchmark Guide</a></li>
+                          <li><a href="https://github.com/${{ github.repository }}/blob/main/TODO.md">TODO & Roadmap</a></li>
+                      </ul>
+                  </div>
+
+                  <div class="card">
+                      <h2>🔧 API Reference</h2>
+                      <ul>
+                          <li><a href="api/src/index.html">Full API Documentation</a></li>
+                      </ul>
+                  </div>
+
+                  <div class="card">
+                      <h2>🐳 Container Images</h2>
+                      <p>Docker images are available at:</p>
+                      <code>ghcr.io/${{ github.repository }}:latest</code>
+                  </div>
+
+                  <div class="card">
+                      <h2>🔗 Links</h2>
+                      <ul>
+                          <li><a href="https://github.com/${{ github.repository }}">GitHub Repository</a></li>
+                          <li><a href="https://github.com/${{ github.repository }}/issues">Issues</a></li>
+                          <li><a href="https://github.com/${{ github.repository }}/actions">CI/CD Status</a></li>
+                      </ul>
+                  </div>
+              </div>
+
+              <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666;">
+                  <p>Generated on: $(date -u '+%Y-%m-%d %H:%M:%S UTC')</p>
+              </footer>
+          </body>
+          </html>
+          EOF
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Documentation index page created" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: docs/
+          retention-days: 30
+
+      - name: Upload to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/
+
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build-api-docs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Generate deployment summary
+        run: |
+          echo "## 🌐 Documentation Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployment Time:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY

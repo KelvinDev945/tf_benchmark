@@ -77,8 +77,9 @@ Update TODO.md: Mark Issue #1 as fixed
 Add comprehensive test suite and documentation for TensorFlow Engine fix
 
 Test files:
-- test_standalone.py ✅
-- test_fix_simple.py
+- scripts/test_tf_engine_fix.py ✅
+- tests/test_models.py
+- tests/test_dataset.py
 - TEST_RESULTS.md
 - DOCKER_TEST_GUIDE.md
 ```
@@ -87,12 +88,11 @@ Test files:
 ```
 Add comprehensive BERT model testing suite
 
-BERT test files:
-- test_bert_mock.py ✅
-- test_bert_simple.py
-- test_bert_complete.py
-- test_bert_direct.py
-- BERT_TEST_RESULTS.md
+BERT test assets:
+- scripts/benchmark_bert_comparison.py
+- scripts/demo_bert_tf_only.py
+- results/bert_comparison/
+- ONNX_CONVERSION_ISSUE_ANALYSIS.md
 ```
 
 ---
@@ -107,12 +107,12 @@ BERT test files:
 
 ### 测试覆盖
 
-| 测试类型 | 测试脚本 | 状态 | 结果 |
+| 测试类型 | 测试入口 | 状态 | 结果 |
 |---------|---------|------|------|
-| 独立测试 | test_standalone.py | ✅ | 通过 |
-| BERT 模拟测试 | test_bert_mock.py | ✅ | 通过 |
-| 代码验证 | test_bert_simple.py | ✅ | 通过（部分）|
-| 完整 BERT 测试 | test_bert_complete.py | ⚠️ | 需要网络 |
+| 引擎修复回归 | scripts/test_tf_engine_fix.py | ✅ | 通过 |
+| 模型单元测试 | tests/test_models.py | ✅ | pytest |
+| 数据集单元测试 | tests/test_dataset.py | ✅ | pytest |
+| 报告生成脚本 | scripts/generate_report.py | 📋 | 手动执行 |
 | Docker 测试 | DOCKER_TEST_GUIDE.md | 📋 | 指南已提供 |
 
 ### 关键测试结果
@@ -196,18 +196,17 @@ BERT 模型:
 - ✅ `TODO.md` (更新)
 
 ### 测试文件
-- ✅ `test_standalone.py` - 独立测试
-- ✅ `test_fix_simple.py` - 简化测试
-- ✅ `test_bert_mock.py` - BERT 模拟测试 ⭐
-- ✅ `test_bert_simple.py` - BERT 简单测试
-- ✅ `test_bert_complete.py` - BERT 完整测试
-- ✅ `test_bert_direct.py` - BERT 直接导入测试
-- ✅ `scripts/test_tf_engine_fix.py` - Docker 测试脚本
+- ✅ `scripts/test_tf_engine_fix.py` - 引擎类型检查回归
+- ✅ `tests/test_models.py` - 模型工具单元测试
+- ✅ `tests/test_dataset.py` - 数据集加载单元测试
+- ♻️ BERT 测试流程整合至 `scripts/benchmark_bert_comparison.py`
 
 ### 文档
 - ✅ `TEST_RESULTS.md` - 详细测试结果
-- ✅ `BERT_TEST_RESULTS.md` - BERT 测试结果
+  - README.md（新增 TensorFlow Hub BERT 演示说明）
 - ✅ `DOCKER_TEST_GUIDE.md` - Docker 测试指南
+- ✅ `ONNX_CONVERSION_ISSUE_ANALYSIS.md` - ONNX 问题分析
+- ✅ `TF2ONNX_VERSION_CONFLICT_EXPLAINED.md` - 依赖冲突解析
 - ✅ `FINAL_SUMMARY.md` - 最终总结（本文档）
 
 ---
@@ -362,9 +361,9 @@ hasattr(model, '__call__') and hasattr(model, 'predict')  # True for all models
 
 - **核心修复**: `src/engines/tensorflow_engine.py`
 - **TODO 更新**: `TODO.md`
-- **测试结果**: `TEST_RESULTS.md`, `BERT_TEST_RESULTS.md`
+- **测试结果**: `TEST_RESULTS.md`
 - **Docker 指南**: `DOCKER_TEST_GUIDE.md`
-- **最佳测试**: `test_bert_mock.py` ⭐
+- **回归脚本**: `scripts/test_tf_engine_fix.py`
 
 ---
 

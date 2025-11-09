@@ -1,0 +1,191 @@
+name: Security
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'requirements.txt'
+      - '.github/workflows/security.yml'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'requirements.txt'
+      - '.github/workflows/security.yml'
+  schedule:
+    # Run weekly on Monday at 9:00 UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  dependency-audit:
+    name: Dependency Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install audit tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit safety
+
+      - name: Run pip-audit
+        id: pip-audit
+        continue-on-error: true
+        run: |
+          echo "## 🔍 pip-audit Vulnerability Scan" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Run pip-audit and capture output
+          if pip-audit -r requirements.txt --format json > audit-report.json 2>&1; then
+            echo "✅ No vulnerabilities found by pip-audit" >> $GITHUB_STEP_SUMMARY
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Vulnerabilities detected by pip-audit" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            # Display human-readable report
+            pip-audit -r requirements.txt --format markdown >> $GITHUB_STEP_SUMMARY 2>&1 || true
+            echo "status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Safety check
+        id: safety
+        continue-on-error: true
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "## 🛡️ Safety Vulnerability Scan" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Run safety check
+          if safety check -r requirements.txt --output text > safety-report.txt 2>&1; then
+            echo "✅ No vulnerabilities found by Safety" >> $GITHUB_STEP_SUMMARY
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Vulnerabilities detected by Safety" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat safety-report.txt >> $GITHUB_STEP_SUMMARY || true
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload audit reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-audit-reports
+          path: |
+            audit-report.json
+            safety-report.txt
+          retention-days: 90
+
+      - name: Check for outdated packages
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Outdated Packages Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          pip install -r requirements.txt > /dev/null 2>&1
+          outdated=$(pip list --outdated --format json)
+
+          if [ "$outdated" = "[]" ]; then
+            echo "✅ All packages are up to date" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "📋 Outdated packages found:" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            pip list --outdated >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Generate security summary
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          pip_audit_status="${{ steps.pip-audit.outputs.status }}"
+          safety_status="${{ steps.safety.outputs.status }}"
+
+          if [ "$pip_audit_status" = "success" ] && [ "$safety_status" = "success" ]; then
+            echo "✅ **All security checks passed!**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Some security issues were found. Please review the reports above.**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Scan Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Repository:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Create issue for vulnerabilities
+        if: |
+          github.event_name == 'schedule' &&
+          (steps.pip-audit.outputs.status == 'failure' || steps.safety.outputs.status == 'failure')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🔒 Security Vulnerabilities Detected in Dependencies';
+            const body = `## Security Alert
+
+            The weekly security scan has detected vulnerabilities in our dependencies.
+
+            **Scan Date:** ${new Date().toISOString()}
+            **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            ### Action Required
+
+            1. Review the security audit reports in the workflow artifacts
+            2. Update vulnerable packages to patched versions
+            3. Test the application after updates
+            4. Close this issue once vulnerabilities are resolved
+
+            ### Reports
+
+            - pip-audit: ${{ steps.pip-audit.outputs.status }}
+            - Safety: ${{ steps.safety.outputs.status }}
+
+            See the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for detailed reports.
+            `;
+
+            // Check if similar issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'security,dependencies'
+            });
+
+            const existingIssue = issues.data.find(issue => issue.title === title);
+
+            if (!existingIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['security', 'dependencies']
+              });
+            }
+
+      - name: Fail if vulnerabilities found (non-scheduled runs)
+        if: |
+          github.event_name != 'schedule' &&
+          (steps.pip-audit.outputs.status == 'failure' || steps.safety.outputs.status == 'failure')
+        run: |
+          echo "❌ Security vulnerabilities detected! Please fix them before merging."
+          exit 1
