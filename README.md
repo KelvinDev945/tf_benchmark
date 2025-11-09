@@ -185,6 +185,10 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Install git hooks for code style checks
+pip install pre-commit
+pre-commit install
+
 # Note: OpenVINO is only available on x86_64
 # On x86_64, additionally run:
 pip install openvino==2023.2.0 openvino-dev==2023.2.0
