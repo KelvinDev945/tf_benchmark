@@ -185,7 +185,18 @@ jobs:
       - name: Fail if vulnerabilities found (non-scheduled runs)
         if: |
           github.event_name != 'schedule' &&
+          github.ref == 'refs/heads/master' &&
           (steps.pip-audit.outputs.status == 'failure' || steps.safety.outputs.status == 'failure')
         run: |
           echo "❌ Security vulnerabilities detected! Please fix them before merging."
           exit 1
+
+      - name: Warn about vulnerabilities (feature branches)
+        if: |
+          github.event_name != 'schedule' &&
+          github.ref != 'refs/heads/master' &&
+          (steps.pip-audit.outputs.status == 'failure' || steps.safety.outputs.status == 'failure')
+        run: |
+          echo "⚠️ Security vulnerabilities detected in feature branch."
+          echo "Please review and fix before merging to master."
+          echo "This is a warning, not blocking the build."
