@@ -107,11 +107,10 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           docker run --rm tf-benchmark:test-${{ steps.detect-platform.outputs.pair }} -c \
-            "import sys; import tensorflow as tf; import onnxruntime as ort; import transformers; \
+            "import sys; import tensorflow as tf; import onnxruntime as ort; \
             print(f'Python: {sys.version}'); \
             print(f'TensorFlow: {tf.__version__}'); \
-            print(f'ONNX Runtime: {ort.__version__}'); \
-            print(f'Transformers: {transformers.__version__}')" | tee version-check.txt
+            print(f'ONNX Runtime: {ort.__version__}')" | tee version-check.txt
 
           echo "### 📦 Installed Versions" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
@@ -126,9 +125,10 @@ jobs:
           docker run --rm tf-benchmark:test-${{ steps.detect-platform.outputs.pair }} -c \
             "import tensorflow as tf; \
             import onnxruntime; \
-            import transformers; \
-            import datasets; \
+            import onnx; \
             import numpy; \
+            import pandas; \
+            import h5py; \
             print('All critical imports successful!')" >> $GITHUB_STEP_SUMMARY 2>&1
 
       - name: Test Docker image - Architecture check

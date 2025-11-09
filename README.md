@@ -74,6 +74,10 @@ docker run --rm \
 cat results/full_benchmark_*/consolidated_report/consolidated_report.md
 ```
 
+> 提示：`./scripts/build_images.sh` 默认构建精简版镜像（不含 OpenVINO）。
+> 若需要在主镜像中加入 OpenVINO，可执行 `ENABLE_OPENVINO=true ./scripts/build_images.sh`；
+> 仅需额外生成带 OpenVINO 的衍生镜像时，可保留默认设置（脚本会在 x86_64 平台自动追加 `tf-cpu-benchmark-openvino` 标记）。
+
 ### Docker Quick Start
 
 ```bash
@@ -88,6 +92,10 @@ docker run --rm -v $(pwd)/results:/app/results \
 # 3. View results
 open results/latest/report/report.html
 ```
+
+> 默认构建足以运行 TensorFlow / ONNX Runtime 等 CPU 引擎的轻量镜像。
+> 需要 OpenVINO 支持时，可在运行脚本前设置 `ENABLE_OPENVINO=true`
+> 或者让脚本自动构建额外的 `tf-cpu-benchmark-openvino` 镜像（x86_64 平台启用）。
 
 ### ⚡ Docker with uv (Optimized - 2-3x Faster Build)
 
@@ -153,12 +161,15 @@ docker run --rm \
 git clone https://github.com/yourusername/tf-cpu-benchmark.git
 cd tf-cpu-benchmark
 
-# Create virtual environment
-python3.11 -m venv venv
+# Create virtual environment (Python 3.10 recommended for TensorFlow 2.15)
+python3.10 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies
+# Install runtime dependencies
 pip install -r requirements.txt
+
+# (Recommended) Install development/test dependencies
+pip install -r requirements-dev.txt
 
 # Install git hooks for code style checks
 pip install pre-commit
@@ -454,8 +465,8 @@ tf-cpu-benchmark/
 Run unit tests:
 
 ```bash
-# Install test dependencies
-pip install -r requirements.txt
+# Install test + dev dependencies
+pip install -r requirements-dev.txt
 
 # Run all tests
 pytest tests/ -v
@@ -526,8 +537,11 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 git clone https://github.com/yourusername/tf-cpu-benchmark.git
 cd tf-cpu-benchmark
 
-# Install development dependencies
+# Install runtime dependencies
 pip install -r requirements.txt
+
+# Install additional dev/test tools
+pip install -r requirements-dev.txt
 
 # Install pre-commit hooks
 pre-commit install

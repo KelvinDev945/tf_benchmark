@@ -81,11 +81,25 @@ print_success "Docker is installed: $(docker --version)"
 # Change to project root
 cd "$PROJECT_ROOT"
 
+# Optional overrides
+BASE_PYTHON_VERSION="${PYTHON_VERSION:-3.11}"
+BASE_ENABLE_OPENVINO="${ENABLE_OPENVINO:-false}"
+
+if [ -z "${BUILD_OPENVINO_VARIANT+x}" ]; then
+    if [ "$BASE_ENABLE_OPENVINO" = "true" ]; then
+        BUILD_OPENVINO_VARIANT="false"
+    else
+        BUILD_OPENVINO_VARIANT="true"
+    fi
+fi
+
 # Build main image
 print_header "Building Main Image (tf-cpu-benchmark:${DOCKER_ARCH})"
 
 if docker build \
     --build-arg TARGETARCH="$DOCKER_ARCH" \
+    --build-arg PYTHON_VERSION="$BASE_PYTHON_VERSION" \
+    --build-arg ENABLE_OPENVINO="$BASE_ENABLE_OPENVINO" \
     -t "tf-cpu-benchmark:${DOCKER_ARCH}" \
     -t "tf-cpu-benchmark:latest" \
     -f "$DOCKER_DIR/Dockerfile" \
@@ -98,21 +112,23 @@ fi
 
 # Build OpenVINO image (x86_64 only)
 if [ "$DOCKER_ARCH" = "amd64" ]; then
-    print_header "Building OpenVINO Image (x86_64 only)"
+    if [ "$BUILD_OPENVINO_VARIANT" = "true" ]; then
+        print_header "Building OpenVINO Image (x86_64 only)"
 
-    if [ -f "$DOCKER_DIR/Dockerfile.openvino" ]; then
         if docker build \
             --build-arg TARGETARCH="$DOCKER_ARCH" \
+            --build-arg PYTHON_VERSION="$BASE_PYTHON_VERSION" \
+            --build-arg ENABLE_OPENVINO=true \
             -t "tf-cpu-benchmark-openvino:${DOCKER_ARCH}" \
             -t "tf-cpu-benchmark-openvino:latest" \
-            -f "$DOCKER_DIR/Dockerfile.openvino" \
+            -f "$DOCKER_DIR/Dockerfile" \
             .; then
             print_success "Successfully built tf-cpu-benchmark-openvino:${DOCKER_ARCH}"
         else
             print_warning "Failed to build OpenVINO image (non-critical)"
         fi
     else
-        print_warning "Dockerfile.openvino not found, skipping OpenVINO image"
+        print_warning "Skipping OpenVINO image (disabled via BUILD_OPENVINO_VARIANT=false)"
     fi
 else
     print_warning "Skipping OpenVINO image (only supported on x86_64)"
