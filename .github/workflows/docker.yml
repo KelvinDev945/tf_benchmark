@@ -3,8 +3,7 @@ name: Docker
 on:
   push:
     branches:
-      - main
-      - develop
+      - master
     paths:
       - 'docker/**'
       - 'requirements.txt'
@@ -14,8 +13,7 @@ on:
       - 'v*.*.*'
   pull_request:
     branches:
-      - main
-      - develop
+      - master
     paths:
       - 'docker/**'
       - 'requirements.txt'

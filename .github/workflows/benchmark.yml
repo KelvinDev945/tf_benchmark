@@ -22,7 +22,7 @@ on:
         type: string
   push:
     branches:
-      - main
+      - master
     paths:
       - 'src/benchmark/**'
       - 'src/engines/**'

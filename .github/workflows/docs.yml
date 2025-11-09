@@ -3,7 +3,7 @@ name: Documentation
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - 'src/**'
       - 'docs/**'
@@ -11,7 +11,7 @@ on:
       - '.github/workflows/docs.yml'
   pull_request:
     branches:
-      - main
+      - master
     paths:
       - 'src/**'
       - 'docs/**'

@@ -3,15 +3,13 @@ name: Security
 on:
   push:
     branches:
-      - main
-      - develop
+      - master
     paths:
       - 'requirements.txt'
       - '.github/workflows/security.yml'
   pull_request:
     branches:
-      - main
-      - develop
+      - master
     paths:
       - 'requirements.txt'
       - '.github/workflows/security.yml'
