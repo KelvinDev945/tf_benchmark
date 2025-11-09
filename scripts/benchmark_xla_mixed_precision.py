@@ -52,10 +52,22 @@ def check_environment():
     }
 
 
-def create_bert_lite_model(seq_length=128, vocab_size=10000, hidden_size=256,
-                            num_hidden_layers=4, num_attention_heads=4):
-    """创建BERT-Lite模型"""
-    print_section("创建BERT-Lite模型")
+def create_bert_model(model_size="lite", seq_length=128, vocab_size=10000):
+    """创建BERT模型（支持lite和base两种规格）"""
+    if model_size == "lite":
+        hidden_size = 256
+        num_hidden_layers = 4
+        num_attention_heads = 4
+        model_name = "BERT-Lite"
+    elif model_size == "base":
+        hidden_size = 768
+        num_hidden_layers = 12
+        num_attention_heads = 12
+        model_name = "BERT-Base"
+    else:
+        raise ValueError(f"Unknown BERT model size: {model_size}")
+
+    print_section(f"创建{model_name}模型")
     print(f"配置:")
     print(f"  序列长度: {seq_length}")
     print(f"  词汇表大小: {vocab_size}")
@@ -114,12 +126,12 @@ def create_bert_lite_model(seq_length=128, vocab_size=10000, hidden_size=256,
     # 分类头
     output = tf.keras.layers.Dense(2, activation='softmax', name='classifier')(pooled_output)
 
-    model = tf.keras.Model(inputs=input_ids, outputs=output, name='bert_lite_model')
+    model = tf.keras.Model(inputs=input_ids, outputs=output, name=f'bert_{model_size}_model')
 
-    print(f"\n✓ BERT-Lite模型创建完成")
+    print(f"\n✓ {model_name}模型创建完成")
     print(f"  总参数: {model.count_params():,}")
 
-    return model
+    return model, model_name, hidden_size, num_hidden_layers, num_attention_heads
 
 
 def create_test_model(model_type="cnn", input_shape=(28, 28, 1), num_classes=10):
@@ -127,14 +139,12 @@ def create_test_model(model_type="cnn", input_shape=(28, 28, 1), num_classes=10)
     print_section(f"创建测试模型: {model_type}")
 
     if model_type == "bert_lite":
-        # BERT模型使用不同的参数
-        return create_bert_lite_model(
-            seq_length=128,
-            vocab_size=10000,
-            hidden_size=256,
-            num_hidden_layers=4,
-            num_attention_heads=4
-        )
+        # BERT-Lite模型
+        return create_bert_model(model_size="lite", seq_length=128, vocab_size=10000)
+
+    elif model_type == "bert_base":
+        # BERT-Base模型
+        return create_bert_model(model_size="base", seq_length=128, vocab_size=10000)
 
     elif model_type == "cnn":
         model = tf.keras.Sequential([
@@ -192,7 +202,7 @@ def create_test_model(model_type="cnn", input_shape=(28, 28, 1), num_classes=10)
     print(f"✓ 模型创建完成")
     print(f"  参数总数: {model.count_params():,}")
 
-    return model
+    return model, None, None, None, None  # 返回与BERT相同的格式，但其他信息为None
 
 
 def prepare_test_data(input_shape, num_samples=1000, num_classes=10, is_bert=False):
@@ -559,7 +569,7 @@ def generate_report(env_info, model_info, baseline_results, xla_results,
 
 def main():
     parser = argparse.ArgumentParser(description="TensorFlow XLA + 混合精度性能测试")
-    parser.add_argument("--model-type", default="cnn", choices=["cnn", "resnet_like", "bert_lite"],
+    parser.add_argument("--model-type", default="cnn", choices=["cnn", "resnet_like", "bert_lite", "bert_base"],
                        help="模型类型")
     parser.add_argument("--output-dir", default="results/xla_mixed_precision",
                        help="输出目录")
@@ -581,20 +591,22 @@ def main():
     env_info = check_environment()
 
     # 根据模型类型设置参数
-    is_bert_model = (args.model_type == "bert_lite")
+    is_bert_model = (args.model_type in ["bert_lite", "bert_base"])
 
     if is_bert_model:
         # BERT模型参数
         input_shape = 128  # 序列长度
         num_classes = 2    # 二分类
-        model = create_test_model(args.model_type, input_shape, num_classes)
+        model, model_name, hidden_size, num_layers, num_heads = create_test_model(
+            args.model_type, input_shape, num_classes
+        )
 
         model_info = {
-            "模型类型": "BERT-Lite",
+            "模型类型": model_name,
             "序列长度": 128,
-            "隐藏层大小": 256,
-            "Transformer层数": 4,
-            "注意力头数": 4,
+            "隐藏层大小": hidden_size,
+            "Transformer层数": num_layers,
+            "注意力头数": num_heads,
             "类别数": num_classes,
             "参数总数": f"{model.count_params():,}"
         }
@@ -602,7 +614,7 @@ def main():
         # CNN/ResNet模型参数
         input_shape = (28, 28, 1)
         num_classes = 10
-        model = create_test_model(args.model_type, input_shape, num_classes)
+        model, _, _, _, _ = create_test_model(args.model_type, input_shape, num_classes)
 
         model_info = {
             "模型类型": args.model_type,

@@ -43,6 +43,16 @@ If you see references to BERT or Transformers models in the codebase, these are 
 - DistilBERT (base-uncased)
 - BERT (base-uncased)
 
+### Benchmark Testing Requirements
+
+**所有benchmark测试必须同时测试bert-base和mobilenet模型**
+
+All benchmark tests MUST include both BERT-Base and MobileNet models to ensure comprehensive performance evaluation across different model architectures:
+- **BERT-Base**: Represents transformer-based NLP models with ~110M parameters
+- **MobileNet**: Represents efficient CNN-based vision models optimized for mobile/edge devices
+
+This requirement ensures that all optimization techniques (XLA, mixed precision, quantization, ONNX conversion) are validated on both model types.
+
 ## 🚀 Quick Start
 
 ### BERT Model Comparison (NEW!)
