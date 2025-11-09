@@ -1,3 +1,39 @@
+[project]
+name = "tf-benchmark-onnx-test"
+version = "0.1.0"
+description = "Testing tf2onnx vs Optimum ONNX conversion methods"
+requires-python = ">=3.10"
+dependencies = [
+    # TensorFlow 2.15 CPU-only for tf2onnx compatibility
+    "tensorflow-cpu==2.15.0",
+
+    # tf2onnx - latest version
+    "tf2onnx>=1.16.0",
+
+    # ONNX and ONNX Runtime (CPU-only)
+    "onnx>=1.15.0",
+    "onnxruntime>=1.16.0",
+
+    # Optimum with ONNX Runtime support
+    "optimum[onnxruntime]>=1.16.0",
+
+    # HuggingFace libraries (required for the test script)
+    "transformers>=4.35.0",
+
+    # Numerical computing
+    "numpy>=1.24.0,<2.0",
+
+    # Protobuf - compatible with TensorFlow 2.15
+    "protobuf>=3.20.0,<4.0",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = []
+
 [tool.black]
 line-length = 100
 target-version = ['py311', 'py312']
