@@ -96,21 +96,51 @@ TFLite conversion failed: object of type 'function' has no len()
 ```
 module 'numpy' has no attribute 'object'.
 `np.object` was a deprecated alias for the builtin `object`.
+
+AttributeError: `np.cast` was removed in the NumPy 2.0 release.
 ```
 
 **根本原因**:
-- NumPy 1.20+ 废弃了 `np.object` 别名
-- tf2onnx 或相关库使用了过时的 NumPy API
-- 环境中的 NumPy 版本较新，与 tf2onnx 不兼容
-
-**可能的解决方案**:
-1. 更新 tf2onnx 到最新版本
-2. 降级 NumPy 版本到 < 1.20（可能影响其他包）
-3. 使用 monkey patch 临时修复
+- NumPy 2.0+ 移除了废弃的API（`np.object`, `np.cast`等）
+- tf2onnx 1.16.1 使用了这些过时的 NumPy API
+- 环境中的 NumPy 2.x 版本与 tf2onnx 不兼容
 
 **影响**: 🟡 影响 ONNX Runtime 测试
 
-**状态**: ❌ 未修复
+**状态**: ✅ 已解决
+
+**解决方案**:
+- **提交**: (待提交)
+- **日期**: 2025-11-09
+- **核心方法**: 降级 NumPy 到 1.x 版本
+- **成功配置**:
+  - TensorFlow: 2.20.0
+  - NumPy: 1.26.4
+  - tf2onnx: 1.16.1
+  - ONNXRuntime: 1.23.2
+  - Protobuf: 6.33.0
+
+- **创建工具**:
+  - `scripts/test_onnx_simple.py` - ONNX转换快速测试
+  - `scripts/benchmark_tf_vs_onnx.py` - TensorFlow vs ONNX性能对比
+
+- **测试结果** (CNN模型):
+  - ✅ ONNX转换成功（7.83s转换时间）
+  - ✅ ONNX模型大小: 0.86 MB
+  - **性能提升**: 77.32x 🚀
+  - TensorFlow延迟: 6.84 ms
+  - ONNX Runtime延迟: 0.09 ms
+  - 吞吐量提升: 77.32x (146 → 11,299 samples/sec)
+
+- **依赖要求**:
+  ```bash
+  pip install "numpy<2.0"  # 必须使用NumPy 1.x
+  pip install tf2onnx onnxruntime
+  ```
+
+**重要发现**:
+- ONNX Runtime在CPU推理上有显著性能优势（70-80倍提速）
+- 推荐用于生产环境部署
 
 ---
 
