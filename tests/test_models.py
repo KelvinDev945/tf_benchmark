@@ -106,8 +106,8 @@ class TestModelLoader:
     @patch("src.models.model_loader.hub.load")
     def test_load_text_model_builds_keras_model(self, mock_hub_load):
         """Ensure load_text_model constructs a classifier when TF Hub is available."""
-        from src.models import ModelLoader
         import src.models.model_loader as model_loader_module
+        from src.models import ModelLoader
 
         @tf.function
         def dummy_signature(input_word_ids, input_mask, input_type_ids):  # type: ignore[no-untyped-def]
