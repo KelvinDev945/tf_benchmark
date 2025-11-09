@@ -11,7 +11,7 @@ tf-keras==2.15.0
 onnx>=1.15.0
 onnxruntime>=1.16.0
 tf2onnx==1.16.1
-optimum[onnxruntime]>=1.16.0  # HuggingFace Optimum for ONNX conversion
+# Note: optimum moved to requirements-dev.txt (only used in benchmark scripts)
 
 # HuggingFace Libraries (NOT REQUIRED - removed)
 # This project does not require HuggingFace libraries
