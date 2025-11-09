@@ -62,9 +62,7 @@ class SimpleTokenizer:
 
         return token_ids_array, attention_mask_array
 
-    def batch_encode(
-        self, texts: Sequence[str], max_length: int
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    def batch_encode(self, texts: Sequence[str], max_length: int) -> Tuple[np.ndarray, np.ndarray]:
         encoded_ids = []
         encoded_masks = []
 
@@ -142,9 +140,7 @@ class TextDatasetLoader:
             raise ValueError("max_length must be positive")
 
         if isinstance(texts, str):
-            input_ids, attention_mask = self._tokenizer.encode(
-                texts, max_length=target_length
-            )
+            input_ids, attention_mask = self._tokenizer.encode(texts, max_length=target_length)
             return {
                 "input_ids": input_ids,
                 "attention_mask": attention_mask,
@@ -153,9 +149,7 @@ class TextDatasetLoader:
         if not isinstance(texts, Iterable):
             raise TypeError("texts must be a string or an iterable of strings")
 
-        encoded_ids, encoded_masks = self._tokenizer.batch_encode(
-            texts, max_length=target_length
-        )
+        encoded_ids, encoded_masks = self._tokenizer.batch_encode(texts, max_length=target_length)
 
         return {
             "input_ids": encoded_ids,
@@ -180,4 +174,3 @@ class TextDatasetLoader:
             f"TextDatasetLoader(dataset='{self.dataset_name}', subset='{self.subset}', "
             f"split='{self.split}', samples={len(self)}, max_length={self.max_length})"
         )
-

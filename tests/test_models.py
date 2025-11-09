@@ -64,9 +64,7 @@ class TestModelLoader:
         """Dummy input for text models should be a dict with BERT keys."""
         from src.models import ModelLoader
 
-        dummy_input = ModelLoader.create_dummy_input(
-            "bert-base-uncased", "text", batch_size=2
-        )
+        dummy_input = ModelLoader.create_dummy_input("bert-base-uncased", "text", batch_size=2)
 
         assert isinstance(dummy_input, dict)
         assert set(dummy_input.keys()) == {
@@ -124,9 +122,7 @@ class TestModelLoader:
         model = ModelLoader.load_text_model("bert-base-uncased", num_labels=3)
 
         assert isinstance(model, tf.keras.Model)
-        dummy_input = ModelLoader.create_dummy_input(
-            "bert-base-uncased", "text", batch_size=2
-        )
+        dummy_input = ModelLoader.create_dummy_input("bert-base-uncased", "text", batch_size=2)
 
         outputs = model(dummy_input, training=False)
         assert outputs.shape == (2, 3)
