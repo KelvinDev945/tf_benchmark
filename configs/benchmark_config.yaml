@@ -45,25 +45,13 @@ dataset:
     # Cache directory
     cache_dir: "./data/cache/imagenet"
 
-  # Text dataset settings
+  # Lightweight text dataset (in-memory) for optional BERT benchmarks
   text:
-    # HuggingFace dataset name
-    name: "glue"
-
-    # Subset/task name
-    subset: "sst2"
-
-    # Dataset split to use
+    name: "builtin-sst2"
+    subset: "validation"
     split: "validation"
-
-    # Number of samples to use
-    num_samples: 1000
-
-    # Enable caching
-    cache: true
-
-    # Cache directory
-    cache_dir: "./data/cache/glue"
+    num_samples: 512
+    max_length: 128
 
 # Models to benchmark
 models:
@@ -73,16 +61,15 @@ models:
     - resnet50
     - efficientnet_b0
 
-  # Text understanding models (BERT family)
+  # Text understanding models (TensorFlow Hub)
   text:
-    - distilbert-base-uncased
     - bert-base-uncased
 
 # Batch sizes to test
 batch_sizes: [1, 4, 8, 16, 32]
 
-# Sequence lengths for text models
-sequence_lengths: [32, 128, 512]
+# Sequence lengths to evaluate for text models (used in extended benchmarks)
+sequence_lengths: [64, 128, 256, 512]
 
 # Inference engines and their configurations
 engines:
@@ -309,7 +296,6 @@ modes:
     test_iterations: 50
     repeat_runs: 1
     batch_sizes: [1, 8]
-    sequence_lengths: [32, 128]
     num_samples_image: 100
     num_samples_text: 50
 
@@ -319,16 +305,14 @@ modes:
     test_iterations: 200
     repeat_runs: 3
     batch_sizes: [1, 4, 8, 16, 32]
-    sequence_lengths: [32, 128, 512]
     num_samples_image: 2000
-    num_samples_text: 500
-
+    num_samples_text: 200
+    sequence_lengths: [64, 128, 256]
   # Full mode: Comprehensive testing (for publication)
   full:
     warmup_iterations: 100
     test_iterations: 500
     repeat_runs: 5
     batch_sizes: [1, 2, 4, 8, 16, 32, 64]
-    sequence_lengths: [32, 64, 128, 256, 512]
     num_samples_image: 5000
     num_samples_text: 1000

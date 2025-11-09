@@ -92,7 +92,6 @@ BERT test assets:
 - scripts/benchmark_bert_comparison.py
 - scripts/demo_bert_tf_only.py
 - results/bert_comparison/
-- BERT_BENCHMARK_GUIDE.md
 - ONNX_CONVERSION_ISSUE_ANALYSIS.md
 ```
 
@@ -204,7 +203,7 @@ BERT 模型:
 
 ### 文档
 - ✅ `TEST_RESULTS.md` - 详细测试结果
-- ✅ `BERT_BENCHMARK_GUIDE.md` - BERT 基准测试指南
+  - README.md（新增 TensorFlow Hub BERT 演示说明）
 - ✅ `DOCKER_TEST_GUIDE.md` - Docker 测试指南
 - ✅ `ONNX_CONVERSION_ISSUE_ANALYSIS.md` - ONNX 问题分析
 - ✅ `TF2ONNX_VERSION_CONFLICT_EXPLAINED.md` - 依赖冲突解析

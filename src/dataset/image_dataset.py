@@ -10,8 +10,15 @@ from typing import Dict, Optional, Tuple
 
 import numpy as np
 import tensorflow as tf
-from datasets import load_dataset
 from PIL import Image
+
+try:
+    from datasets import load_dataset
+
+    HAS_DATASETS = True
+except ImportError:
+    HAS_DATASETS = False
+    load_dataset = None  # type: ignore
 
 
 class ImageDatasetLoader:
@@ -48,7 +55,14 @@ class ImageDatasetLoader:
 
         Raises:
             ValueError: If parameters are invalid
+            ImportError: If datasets library is not installed
         """
+        if not HAS_DATASETS:
+            raise ImportError(
+                "The 'datasets' library is required for ImageDatasetLoader. "
+                "Install it with: pip install datasets"
+            )
+
         self.dataset_name = dataset_name
         self.split = split
         self.num_samples = num_samples

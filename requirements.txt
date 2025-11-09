@@ -9,10 +9,8 @@ tf-keras>=2.20.0
 # ONNX and ONNX Runtime
 onnx>=1.15.0
 onnxruntime>=1.16.0
-# tf2onnx  # 暂时移除：与TensorFlow 2.20的protobuf 5.x要求冲突
-           # tf2onnx 1.16.x要求protobuf<4.0，无法与TF 2.20共存
-           # 解决方案：使用HuggingFace Optimum替代
-           # 详见: TF2ONNX_VERSION_CONFLICT_EXPLAINED.md
+# tf2onnx>=1.16.0  # Incompatible: requires protobuf<4.0, conflicts with TF 2.20's protobuf>=5.28
+optimum[onnxruntime]>=1.16.0  # HuggingFace Optimum for ONNX conversion (no protobuf conflict)
 
 # HuggingFace Libraries (NOT REQUIRED - removed)
 # This project does not require HuggingFace libraries
@@ -26,7 +24,7 @@ onnxruntime>=1.16.0
 # openvino-dev==2023.2.0
 
 # Numerical Computing
-numpy>=1.24.0
+numpy>=1.24.0,<2.0  # Pin to 1.x for ONNX tooling compatibility
 scipy>=1.11.0
 
 # Data Processing and Analysis
@@ -37,7 +35,7 @@ scikit-learn>=1.3.0
 matplotlib>=3.7.0
 seaborn>=0.12.0
 plotly>=5.18.0
-kaleido>=0.2.1
+# kaleido>=0.2.1  # Not used in codebase (plotly static export)
 
 # Configuration Management
 pyyaml>=6.0
@@ -81,9 +79,9 @@ urllib3>=2.1.0
 # Model Quantization Tools
 tensorflow-model-optimization>=0.7.5
 
-# Additional ONNX Tools
-onnx-simplifier>=0.4.35
-onnxoptimizer>=0.3.13
+# Additional ONNX Tools (removed unused packages)
+# onnx-simplifier>=0.4.35  # Not used in codebase
+# onnxoptimizer>=0.3.13    # Not used in codebase
 
 # HDF5 Support
 h5py>=3.10.0
@@ -92,4 +90,4 @@ h5py>=3.10.0
 protobuf>=5.28.0
 
 # Network Analysis (optional)
-networkx>=3.2.0
+# networkx>=3.2.0  # Not used in codebase

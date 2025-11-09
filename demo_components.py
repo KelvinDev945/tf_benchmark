@@ -46,7 +46,7 @@ print("\n📦 Available Text Models:")
 for model_name, model_info in ModelLoader.TEXT_MODELS.items():
     print(f"  - {model_name}")
     print(f"    Max length: {model_info['max_length']}")
-    print(f"    Num labels: {model_info['num_labels']}")
+    print(f"    Hub URL: {model_info['hub_url']}")
 
 # ============================================================================
 # 2. Dataset Preparation Demo
@@ -64,12 +64,11 @@ print(f"  Target size: {image_loader.target_size}")
 print(f"  Num samples: {image_loader.num_samples}")
 
 print("\n📊 Text Dataset Loader:")
-text_loader = TextDatasetLoader(
-    dataset_name="glue", subset="sst2", split="validation", num_samples=10, max_length=128
-)
+text_loader = TextDatasetLoader(num_samples=4, max_length=32)
+text_loader.load()
 print(f"  {text_loader}")
-print(f"  Max length: {text_loader.max_length}")
-print(f"  Num samples: {text_loader.num_samples}")
+text_tokens = text_loader.tokenize(["Benchmarking is fun"])
+print(f"  Tokenized input_ids shape: {text_tokens['input_ids'].shape if text_tokens['input_ids'].ndim > 1 else text_tokens['input_ids'].shape}")
 
 # ============================================================================
 # 3. Dummy Input Generation Demo
@@ -86,13 +85,8 @@ print(f"  Range: [{dummy_image.min():.3f}, {dummy_image.max():.3f}]")
 
 print("\n🎲 Creating dummy text input:")
 dummy_text = ModelLoader.create_dummy_input("bert-base-uncased", "text", batch_size=4)
-if isinstance(dummy_text, dict):
-    print(f"  Type: Dictionary with keys: {list(dummy_text.keys())}")
-    for key, value in dummy_text.items():
-        print(f"  {key}: shape={value.shape}, dtype={value.dtype}")
-else:
-    print(f"  Shape: {dummy_text.shape}")
-    print(f"  Dtype: {dummy_text.dtype}")
+for key, value in dummy_text.items():
+    print(f"  {key}: shape={value.shape}, dtype={value.dtype}")
 
 # ============================================================================
 # 4. Metrics Collection Demo

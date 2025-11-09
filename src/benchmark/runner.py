@@ -189,8 +189,8 @@ class BenchmarkRunner:
 
     def _run_quick_benchmark(self) -> List[Dict]:
         """Run a quick benchmark with minimal models/engines."""
-        from engines import TensorFlowEngine
-        from models import ModelLoader
+        from src.engines import TensorFlowEngine
+        from src.models import ModelLoader
 
         print("\n🔹 Quick benchmark: MobileNetV2 + TensorFlow baseline")
 

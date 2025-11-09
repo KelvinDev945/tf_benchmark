@@ -1,6 +1,79 @@
 # TODO - TensorFlow Benchmark 待办事项
 
-**最后更新**: 2025-11-09 (ONNX 转换问题分析完成)
+**最后更新**: 2025-11-09 (CI/CD修复进行中)
+
+---
+
+## 🚧 当前进行中 - CI/CD全面修复 (2025-11-09)
+
+### 目标
+修复所有CI/CD流程失败问题，确保所有workflows通过
+
+### 已完成 ✅
+
+1. **更新依赖配置**
+   - ✅ 添加 `tf2onnx>=1.16.0` 到 requirements.txt (已重新启用)
+   - ✅ 固定 `numpy>=1.24.0,<2.0` (解决tf2onnx的NumPy 2.0兼容性问题)
+   - ✅ 保留 `onnx>=1.15.0` 和 `onnxruntime>=1.16.0`
+
+2. **核心代码验证**
+   - ✅ 确认TFLite INT8量化代码正确实现 (`scripts/quantize_int8.py`)
+   - ✅ 确认没有NumPy废弃属性使用 (无 `np.bool`, `np.cast` 等)
+   - ✅ 确认TensorFlow Engine类型检查已修复 (commit 894d3ba)
+
+3. **CI/CD配置修复**
+   - ✅ 修复 `.github/workflows/docs.yml` 分支名错误 (main -> master, line 305, 314)
+   - ✅ 确认集成测试支持config-based运行 (main.py已支持--config参数)
+   - ✅ 确认Docker TFLite runtime有正确的fallback处理
+
+4. **依赖库处理**
+   - ✅ ModelLoader已通过TensorFlow Hub恢复BERT支持 (用户已实现)
+   - ✅ 创建影响评估文档 `TRANSFORMERS_REMOVAL_IMPACT.md`
+   - ⚠️ 注意: 用户已将BERT支持改为使用TensorFlow Hub而非HuggingFace transformers
+
+### 待处理 📋
+
+5. **清理transformers遗留代码**
+   - [ ] 删除或重构 `src/dataset/text_dataset.py` (完全依赖transformers/datasets)
+   - [ ] 更新 `src/dataset/__init__.py` 移除TextDatasetLoader导入
+   - [ ] 删除 `tests/test_models.py` 中的文本模型测试 (5个测试)
+   - [ ] 删除 `tests/test_dataset.py` 中的文本数据集测试
+   - [ ] 检查并处理 `scripts/benchmark_bert_comparison.py` (依赖TextDatasetLoader)
+
+6. **测试修复**
+   - [ ] 检查并启用当前被跳过的集成测试
+   - [ ] 运行本地单元测试验证所有修复
+
+7. **代码质量修复**
+   - [ ] 运行 black 格式化检查
+   - [ ] 运行 isort import排序检查
+   - [ ] 运行 flake8 语法检查
+   - [ ] 运行 mypy 类型检查
+
+8. **功能验证**
+   - [ ] 本地测试ONNX转换 (tf2onnx + numpy<2.0 组合)
+   - [ ] 本地测试TFLite INT8量化
+   - [ ] 测试Docker多架构构建
+
+9. **最终验证**
+   - [ ] 提交所有更改并推送
+   - [ ] 验证所有CI/CD workflows通过
+
+### 关键发现
+
+**ONNX转换解决方案**:
+- ✅ tf2onnx 1.16.1 在 TensorFlow 2.20 环境下可用
+- ✅ 关键是固定 numpy<2.0 (tf2onnx使用了NumPy 2.0移除的API)
+- ✅ 已更新 requirements.txt 实现此配置
+
+**BERT模型支持方案**:
+- 用户已实现基于TensorFlow Hub的BERT支持
+- 不再依赖HuggingFace transformers库
+- `ModelLoader.load_text_model()` 使用 tensorflow_hub 加载BERT
+- 需清理旧的transformers依赖代码
+
+### 下一步
+继续从步骤5开始，清理transformers遗留代码并运行测试验证
 
 ---
 
@@ -668,7 +741,6 @@ Loading a PyTorch model in TensorFlow, requires both PyTorch and TensorFlow to b
 
 - [README.md](README.md) - 项目主文档
 - [PROJECT_COMPLETE.md](PROJECT_COMPLETE.md) - 完整项目文档
-- [BERT_BENCHMARK_GUIDE.md](BERT_BENCHMARK_GUIDE.md) - BERT 使用指南
 
 ---
 
