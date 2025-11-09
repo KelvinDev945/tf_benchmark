@@ -333,14 +333,9 @@ class BenchmarkRunner:
             return
 
         try:
-            from reporting import DataProcessor, ReportGenerator
+            from reporting import ReportGenerator
 
             print("\n📊 Generating reports...")
-
-            # Process data
-            processor = DataProcessor()
-            # Note: DataProcessor expects results in a specific format
-            # This is a simplified version
 
             # Generate reports
             generator = ReportGenerator()
