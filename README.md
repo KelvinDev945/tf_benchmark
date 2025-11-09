@@ -62,6 +62,30 @@ cat results/bert_comparison/bert_comparison_report.md
 
 See [BERT_BENCHMARK_GUIDE.md](BERT_BENCHMARK_GUIDE.md) for detailed instructions.
 
+### BERT TensorFlow vs ONNX Direct Comparison (NEW!)
+
+Compare TensorFlow BERT with ONNX Runtime using SavedModel approach (fixes TF 2.20 compatibility):
+
+```bash
+# Run BERT TF vs ONNX comparison (local)
+python3 scripts/bert_tf_vs_onnx.py --num-warmup 10 --num-test 50
+
+# Run with Docker (recommended for reproducibility)
+docker run --rm -v $(pwd)/results:/app/results \
+    tf-cpu-benchmark:uv \
+    python3 scripts/bert_tf_vs_onnx.py --num-warmup 10 --num-test 50
+
+# View results
+cat results/bert_tf_vs_onnx/savedmodel_test_report.md
+```
+
+**Key Features**:
+- ✅ Uses SavedModel format (TF 2.20 compatible)
+- ✅ Avoids KerasLayer compatibility issues
+- ✅ Direct serving signature inference
+- 📊 Detailed latency metrics (p50, p95, p99)
+- 📊 Throughput analysis
+
 ### Full Benchmark Suite
 
 ```bash
@@ -479,6 +503,20 @@ chmod +x scripts/*.sh
 ```
 
 ### Known Issues with BERT Benchmark
+
+#### ✅ FIXED: TensorFlow Hub KerasLayer Compatibility (TF 2.20)
+
+**Original Issue**: `scripts/bert_tf_vs_onnx.py` failed with KerasTensor conversion error in TensorFlow 2.20
+
+**Status**: ✅ **RESOLVED**
+
+**Solution**: Script updated to use SavedModel format instead of KerasLayer
+- Old approach: `hub.KerasLayer()` → KerasTensor error
+- New approach: `tf.saved_model.load()` → Direct serving signature
+
+**Usage**: See [BERT TensorFlow vs ONNX Direct Comparison](#bert-tensorflow-vs-onnx-direct-comparison-new) section above
+
+---
 
 #### Issue 1: TensorFlow Engine - Model Type Check Error
 

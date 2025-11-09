@@ -9,7 +9,10 @@ tf-keras>=2.20.0
 # ONNX and ONNX Runtime
 onnx>=1.15.0
 onnxruntime>=1.16.0
-tf2onnx
+# tf2onnx  # 暂时移除：与TensorFlow 2.20的protobuf 5.x要求冲突
+           # tf2onnx 1.16.x要求protobuf<4.0，无法与TF 2.20共存
+           # 解决方案：使用HuggingFace Optimum替代
+           # 详见: TF2ONNX_VERSION_CONFLICT_EXPLAINED.md
 
 # HuggingFace Libraries (NOT REQUIRED - removed)
 # This project does not require HuggingFace libraries

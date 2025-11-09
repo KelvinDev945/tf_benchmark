@@ -1,10 +1,77 @@
 # TODO - TensorFlow Benchmark 待办事项
 
-**最后更新**: 2025-11-08 (Issue #1 已修复)
+**最后更新**: 2025-11-09 (ONNX 转换问题分析完成)
 
 ---
 
 ## 🔴 高优先级 - 阻塞性问题
+
+### ⚠️ ONNX 转换失败问题 (新发现)
+
+**状态**: ❌ 阻塞中 - 依赖冲突无法直接解决
+
+**核心问题**: tf2onnx 与 TensorFlow 2.20 存在 protobuf 版本冲突
+
+#### 三层嵌套的依赖冲突
+
+```
+第1层: NumPy API变更
+  └─ NumPy 1.26+ 移除了 np.bool
+
+第2层: tf2onnx版本兼容
+  ├─ tf2onnx 1.8.4 (Docker中) → ❌ 不支持 NumPy 1.26
+  └─ tf2onnx 1.16.1 (最新)   → ✅ 支持 NumPy 1.26
+
+第3层: Protobuf版本冲突 (根本原因)
+  ├─ TensorFlow 2.20   → 要求 protobuf >= 5.28.0
+  └─ tf2onnx 1.16.1    → 要求 protobuf < 4.0
+      └─ ❌ 无法共存！
+```
+
+#### 为什么 Docker 安装了 tf2onnx 1.8.4？
+
+1. ✅ uv 安装 TensorFlow 2.20 → 锁定 protobuf >= 5.28
+2. ❌ 尝试 tf2onnx 1.16.1 → 冲突 (需要 protobuf < 4.0)
+3. 🔄 回溯尝试旧版本...
+4. ✅ tf2onnx 1.8.4 → **唯一兼容 protobuf 5.x 的版本**
+5. ⚠️ 但 tf2onnx 1.8.4 使用 np.bool (NumPy 1.26 已移除)
+6. ❌ **ONNX 转换失败**
+
+#### 影响
+
+- ❌ 无法使用 tf2onnx 进行 ONNX 转换
+- ❌ 无法直接对比 TensorFlow vs ONNX Runtime 性能
+- ✅ TensorFlow 测试正常工作 (已获得性能数据)
+
+#### 推荐解决方案
+
+✅ **使用 HuggingFace Optimum** (强烈推荐)
+```bash
+pip install optimum[onnxruntime]
+```
+
+**优点**:
+- ✅ 无 protobuf 版本冲突
+- ✅ 原生支持 Transformers 模型
+- ✅ 自动优化和量化
+- ✅ 活跃维护
+
+**待办**:
+- [ ] 添加 `optimum[onnxruntime]` 到 requirements.txt
+- [ ] 创建 `scripts/bert_optimum_benchmark.py`
+- [ ] 运行 TF vs ONNX 完整对比测试
+- [ ] 更新 README 和文档
+
+#### 详细分析
+
+参见以下文档获取完整技术分析:
+- `ONNX_CONVERSION_ISSUE_ANALYSIS.md` - NumPy 兼容性问题
+- `TF2ONNX_VERSION_CONFLICT_EXPLAINED.md` - Protobuf 依赖冲突详解
+- `scripts/diagnose_onnx_issue.py` - 自动诊断工具
+
+---
+
+## 🔴 高优先级 - 阻塞性问题 (已解决)
 
 ### 1. 修复 TensorFlow Engine 类型检查错误
 
@@ -493,6 +560,35 @@ Loading a PyTorch model in TensorFlow, requires both PyTorch and TensorFlow to b
 ---
 
 ## ✅ 最近完成
+
+### 2025-11-09: BERT 脚本修复和 ONNX 问题分析
+
+- [x] **修复 BERT TF 2.20 兼容性问题**
+  - 将 `scripts/bert_tf_vs_onnx.py` 修复为使用 SavedModel 方式
+  - 避免了 KerasLayer 的 KerasTensor 转换错误
+  - 备份原始脚本到 `scripts/bert_tf_vs_onnx.py.backup`
+
+- [x] **Docker 环境测试成功**
+  - 在 Docker 容器中成功运行 BERT TensorFlow 测试
+  - 获得完整性能数据 (延迟: 271.17ms, 吞吐: 3.69 samples/sec)
+  - 生成详细的测试报告
+
+- [x] **深度分析 ONNX 转换失败原因**
+  - 识别出三层嵌套的依赖冲突
+  - 发现 tf2onnx 与 TensorFlow 2.20 的 protobuf 版本冲突
+  - 解释了为什么 Docker 安装了旧版 tf2onnx 1.8.4
+
+- [x] **创建完整的问题分析文档**
+  - `ONNX_CONVERSION_ISSUE_ANALYSIS.md` - NumPy 兼容性分析
+  - `TF2ONNX_VERSION_CONFLICT_EXPLAINED.md` - Protobuf 冲突完整解析
+  - `scripts/diagnose_onnx_issue.py` - 自动诊断工具
+
+- [x] **更新项目文档**
+  - 更新 README.md 添加 BERT 测试说明
+  - 标记 KerasLayer 问题为已修复
+  - 添加 Docker 运行示例
+
+### 之前完成
 
 - [x] 精简项目文档（从 12 个减少到 3 个）
 - [x] 合并 TODO 内容到 README.md
