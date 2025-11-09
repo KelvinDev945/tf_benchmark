@@ -13,9 +13,9 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 
-print("="*70)
+print("=" * 70)
 print("Docker Environment Test - uv Package Manager")
-print("="*70)
+print("=" * 70)
 print()
 
 # System info
@@ -32,35 +32,37 @@ print(f"  NumPy: {np.__version__}")
 
 try:
     import onnxruntime as ort
+
     print(f"  ONNX Runtime: {ort.__version__}")
 except ImportError:
-    print(f"  ONNX Runtime: Not installed")
+    print("  ONNX Runtime: Not installed")
 
 try:
     import tensorflow_hub as hub
+
     print(f"  TensorFlow Hub: {hub.__version__}")
 except ImportError:
-    print(f"  TensorFlow Hub: Not installed")
+    print("  TensorFlow Hub: Not installed")
 
 try:
     from openvino.runtime import Core
-    print(f"  OpenVINO: Available")
+
+    _ = Core
+    print("  OpenVINO: Available")
 except ImportError:
-    print(f"  OpenVINO: Not available")
+    print("  OpenVINO: Not available")
 
 print()
 
 # Quick MobileNetV2 inference test
-print("="*70)
+print("=" * 70)
 print("Quick MobileNetV2 Inference Test")
-print("="*70)
+print("=" * 70)
 print()
 
 print("Loading MobileNetV2 model...")
 model = tf.keras.applications.MobileNetV2(
-    input_shape=(224, 224, 3),
-    include_top=True,
-    weights='imagenet'
+    input_shape=(224, 224, 3), include_top=True, weights="imagenet"
 )
 print("✓ Model loaded successfully")
 print(f"  Parameters: {model.count_params():,}")
@@ -71,7 +73,7 @@ batch_size = 1
 test_samples = 20
 test_data = np.random.rand(test_samples, 224, 224, 3).astype(np.float32)
 
-print(f"Test Configuration:")
+print("Test Configuration:")
 print(f"  Batch size: {batch_size}")
 print(f"  Test samples: {test_samples}")
 print(f"  Input shape: {test_data.shape}")
@@ -80,7 +82,7 @@ print()
 # Warmup
 print("Warmup (5 iterations)...")
 for i in range(5):
-    _ = model.predict(test_data[i:i+1], verbose=0)
+    _ = model.predict(test_data[i : i + 1], verbose=0)
 print("✓ Warmup complete")
 print()
 
@@ -90,7 +92,7 @@ latencies = []
 
 for i in range(test_samples):
     start = time.perf_counter()
-    _ = model.predict(test_data[i:i+1], verbose=0)
+    _ = model.predict(test_data[i : i + 1], verbose=0)
     end = time.perf_counter()
     latency_ms = (end - start) * 1000
     latencies.append(latency_ms)
@@ -120,15 +122,15 @@ results = {
         "latency_p95_ms": float(np.percentile(latencies_np, 95)),
         "latency_p99_ms": float(np.percentile(latencies_np, 99)),
         "throughput_samples_per_sec": test_samples / (np.sum(latencies_np) / 1000),
-    }
+    },
 }
 
 # Print results
-print("="*70)
+print("=" * 70)
 print("Benchmark Results")
-print("="*70)
+print("=" * 70)
 print()
-print(f"Latency Statistics:")
+print("Latency Statistics:")
 print(f"  Mean:   {results['statistics']['latency_mean_ms']:.2f} ms")
 print(f"  Median: {results['statistics']['latency_median_ms']:.2f} ms")
 print(f"  Std:    {results['statistics']['latency_std_ms']:.2f} ms")
@@ -152,9 +154,9 @@ with open(results_file, "w") as f:
 print(f"✓ Results saved to: {results_file}")
 print()
 
-print("="*70)
+print("=" * 70)
 print("✓ Docker Environment Test Complete!")
-print("="*70)
+print("=" * 70)
 print()
 print("Summary:")
 print("  - uv package manager: Working ✓")

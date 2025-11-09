@@ -12,8 +12,6 @@ Usage:
 import argparse
 import json
 from pathlib import Path
-from typing import Dict, List
-
 import pandas as pd
 
 
@@ -109,11 +107,7 @@ class ConsolidatedReportGenerator:
             DataFrame with BERT comparison
         """
         # Filter BERT results
-        bert_results = [
-            r
-            for r in self.all_results
-            if "bert" in r.get("model", "").lower()
-        ]
+        bert_results = [r for r in self.all_results if "bert" in r.get("model", "").lower()]
 
         if not bert_results:
             print("No BERT results found")
@@ -230,15 +224,21 @@ class ConsolidatedReportGenerator:
                 f.write(f"- **Model**: {fastest['Model']}\n")
                 f.write(f"- **Engine**: {fastest['Engine']}\n")
                 f.write(f"- **Latency (mean)**: {fastest['Latency Mean (ms)']:.2f} ms\n")
-                f.write(f"- **Throughput**: {fastest['Throughput (samples/sec)']:.2f} samples/sec\n\n")
+                f.write(
+                    f"- **Throughput**: {fastest['Throughput (samples/sec)']:.2f} samples/sec\n\n"
+                )
 
                 # Highest throughput
                 highest_throughput = summary_df.loc[summary_df["Throughput (samples/sec)"].idxmax()]
                 f.write("### Highest Throughput\n\n")
                 f.write(f"- **Model**: {highest_throughput['Model']}\n")
                 f.write(f"- **Engine**: {highest_throughput['Engine']}\n")
-                f.write(f"- **Throughput**: {highest_throughput['Throughput (samples/sec)']:.2f} samples/sec\n")
-                f.write(f"- **Latency (mean)**: {highest_throughput['Latency Mean (ms)']:.2f} ms\n\n")
+                f.write(
+                    f"- **Throughput**: {highest_throughput['Throughput (samples/sec)']:.2f} samples/sec\n"
+                )
+                f.write(
+                    f"- **Latency (mean)**: {highest_throughput['Latency Mean (ms)']:.2f} ms\n\n"
+                )
 
             # Recommendations
             f.write("## Recommendations\n\n")
@@ -248,22 +248,32 @@ class ConsolidatedReportGenerator:
                 # Find best BERT configuration
                 best_bert = bert_df.loc[bert_df["Latency Mean (ms)"].idxmin()]
 
-                f.write(f"**BERT Models**:\n")
+                f.write("**BERT Models**:\n")
                 f.write(f"- Recommended configuration: {best_bert['Configuration']}\n")
                 f.write(f"- Expected latency: {best_bert['Latency Mean (ms)']:.2f} ms\n")
-                f.write(f"- Expected throughput: {best_bert['Throughput (samples/sec)']:.2f} samples/sec\n\n")
+                f.write(
+                    f"- Expected throughput: {best_bert['Throughput (samples/sec)']:.2f} samples/sec\n\n"
+                )
 
             if not summary_df.empty:
                 # Image models recommendation
-                image_results = summary_df[summary_df["Model"].str.contains("mobilenet|resnet|efficientnet", case=False, na=False)]
+                image_results = summary_df[
+                    summary_df["Model"].str.contains(
+                        "mobilenet|resnet|efficientnet", case=False, na=False
+                    )
+                ]
 
                 if not image_results.empty:
                     best_image = image_results.loc[image_results["Latency Mean (ms)"].idxmin()]
 
-                    f.write(f"**Image Models**:\n")
-                    f.write(f"- Recommended configuration: {best_image['Model']} + {best_image['Engine']}\n")
+                    f.write("**Image Models**:\n")
+                    f.write(
+                        f"- Recommended configuration: {best_image['Model']} + {best_image['Engine']}\n"
+                    )
                     f.write(f"- Expected latency: {best_image['Latency Mean (ms)']:.2f} ms\n")
-                    f.write(f"- Expected throughput: {best_image['Throughput (samples/sec)']:.2f} samples/sec\n\n")
+                    f.write(
+                        f"- Expected throughput: {best_image['Throughput (samples/sec)']:.2f} samples/sec\n\n"
+                    )
 
         print(f"✓ Markdown report saved to: {report_file}")
 
@@ -316,9 +326,7 @@ class ConsolidatedReportGenerator:
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Generate consolidated benchmark report"
-    )
+    parser = argparse.ArgumentParser(description="Generate consolidated benchmark report")
     parser.add_argument(
         "--input-dir",
         type=str,

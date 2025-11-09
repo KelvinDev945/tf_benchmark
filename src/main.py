@@ -9,11 +9,8 @@ from pathlib import Path
 
 import click
 
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from config import ConfigLoader
-from benchmark import BenchmarkRunner
+from .benchmark import BenchmarkRunner
+from .config import ConfigLoader
 
 
 @click.command()
@@ -71,7 +68,7 @@ def main(config, mode, engines, models, output, verbose):
     print("\n🏃 Running benchmark...")
     try:
         runner = BenchmarkRunner(cfg)
-        results = runner.run_all()
+        runner.run_all()
         runner.save_results(Path(output) / "results.json")
         print("\n✓ Completed!")
         return 0

@@ -6,7 +6,7 @@ This module processes benchmark results for analysis and visualization.
 
 import json
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 import pandas as pd
 
@@ -68,9 +68,15 @@ class DataProcessor:
             raise RuntimeError("No data loaded. Call load_results() first.")
 
         # Group by engine and calculate mean statistics
-        grouped = self.raw_data.groupby("engine").agg({
-            "statistics": "mean",
-        }).reset_index()
+        grouped = (
+            self.raw_data.groupby("engine")
+            .agg(
+                {
+                    "statistics": "mean",
+                }
+            )
+            .reset_index()
+        )
 
         return grouped
 
@@ -84,9 +90,15 @@ class DataProcessor:
         if self.raw_data is None:
             raise RuntimeError("No data loaded. Call load_results() first.")
 
-        grouped = self.raw_data.groupby("model").agg({
-            "statistics": "mean",
-        }).reset_index()
+        grouped = (
+            self.raw_data.groupby("model")
+            .agg(
+                {
+                    "statistics": "mean",
+                }
+            )
+            .reset_index()
+        )
 
         return grouped
 

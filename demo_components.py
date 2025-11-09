@@ -9,18 +9,21 @@ This demonstrates:
 4. Single inference execution
 """
 
+import random
 import sys
-import numpy as np
+import time
 from pathlib import Path
+
+import numpy as np
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from models import ModelLoader
-from dataset import ImageDatasetLoader, TextDatasetLoader
-from engines import TensorFlowEngine, ONNXEngine
 from benchmark.metrics import MetricsCollector
 from benchmark.monitor import ResourceMonitor
+from dataset import ImageDatasetLoader, TextDatasetLoader
+from engines import TensorFlowEngine
+from models import ModelLoader
 
 print("=" * 70)
 print("TensorFlow Multi-Engine Benchmark - Component Demo")
@@ -54,10 +57,7 @@ print("=" * 70)
 
 print("\n📊 Image Dataset Loader:")
 image_loader = ImageDatasetLoader(
-    dataset_name="imagenet-1k",
-    split="validation",
-    num_samples=10,
-    target_size=(224, 224)
+    dataset_name="imagenet-1k", split="validation", num_samples=10, target_size=(224, 224)
 )
 print(f"  {image_loader}")
 print(f"  Target size: {image_loader.target_size}")
@@ -65,11 +65,7 @@ print(f"  Num samples: {image_loader.num_samples}")
 
 print("\n📊 Text Dataset Loader:")
 text_loader = TextDatasetLoader(
-    dataset_name="glue",
-    subset="sst2",
-    split="validation",
-    num_samples=10,
-    max_length=128
+    dataset_name="glue", subset="sst2", split="validation", num_samples=10, max_length=128
 )
 print(f"  {text_loader}")
 print(f"  Max length: {text_loader.max_length}")
@@ -109,17 +105,11 @@ print("\n📈 Simulating inference metrics:")
 metrics = MetricsCollector()
 
 # Simulate some latency measurements
-import random
 for i in range(100):
     latency_ms = random.uniform(10, 30)
     metrics.add_latency(latency_ms)
 
-metrics.set_timing_info(
-    total_time=2.5,
-    num_samples=100,
-    num_batches=100,
-    batch_size=1
-)
+metrics.set_timing_info(total_time=2.5, num_samples=100, num_batches=100, batch_size=1)
 
 stats = metrics.calculate_statistics()
 print(f"  Mean latency: {stats['latency_mean']:.2f} ms")
@@ -138,7 +128,6 @@ print("=" * 70)
 print("\n🔍 Monitoring system resources:")
 monitor = ResourceMonitor(sampling_interval=0.1)
 
-import time
 with monitor:
     # Simulate some work
     for i in range(10):

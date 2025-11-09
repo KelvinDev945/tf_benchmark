@@ -6,7 +6,7 @@ Simplified version for Phase 5.
 """
 
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -29,15 +29,13 @@ class BenchmarkVisualizer:
         """
         try:
             plt.style.use(style)
-        except:
+        except Exception:
             plt.style.use("default")
 
         self.color_palette = sns.color_palette("husl", 8)
         sns.set_palette(self.color_palette)
 
-    def plot_throughput_comparison(
-        self, data: pd.DataFrame, output_path: Path
-    ) -> None:
+    def plot_throughput_comparison(self, data: pd.DataFrame, output_path: Path) -> None:
         """
         Generate throughput comparison bar chart.
 
@@ -53,8 +51,7 @@ class BenchmarkVisualizer:
         labels = [f"{e}_{c}" for e, c in zip(engines, configs)]
 
         throughputs = [
-            row["statistics"].get("throughput_samples_per_sec", 0)
-            for _, row in data.iterrows()
+            row["statistics"].get("throughput_samples_per_sec", 0) for _, row in data.iterrows()
         ]
 
         # Create bar chart
@@ -123,10 +120,7 @@ class BenchmarkVisualizer:
         labels = [f"{e}_{c}" for e, c in zip(engines, configs)]
 
         # CPU usage
-        cpu_usage = [
-            row.get("resource_usage", {}).get("cpu_mean", 0)
-            for _, row in data.iterrows()
-        ]
+        cpu_usage = [row.get("resource_usage", {}).get("cpu_mean", 0) for _, row in data.iterrows()]
 
         ax1.bar(range(len(labels)), cpu_usage, color=self.color_palette[1])
         ax1.set_xticks(range(len(labels)))
@@ -137,8 +131,7 @@ class BenchmarkVisualizer:
 
         # Memory usage
         memory_usage = [
-            row.get("resource_usage", {}).get("memory_mean_mb", 0)
-            for _, row in data.iterrows()
+            row.get("resource_usage", {}).get("memory_mean_mb", 0) for _, row in data.iterrows()
         ]
 
         ax2.bar(range(len(labels)), memory_usage, color=self.color_palette[2])
@@ -153,9 +146,7 @@ class BenchmarkVisualizer:
         plt.close()
         print(f"✓ Saved resource usage chart to {output_path}")
 
-    def generate_all_plots(
-        self, data: pd.DataFrame, output_dir: Path
-    ) -> List[Path]:
+    def generate_all_plots(self, data: pd.DataFrame, output_dir: Path) -> List[Path]:
         """
         Generate all visualization plots.
 

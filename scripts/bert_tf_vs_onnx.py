@@ -16,16 +16,17 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_hub as hub
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
-print("="*70)
+print("=" * 70)
 print("BERT CPU推理性能对比: TensorFlow vs ONNX Runtime (Fixed)")
-print("="*70)
+print("=" * 70)
 print(f"TensorFlow 版本: {tf.__version__}")
 print(f"NumPy 版本: {np.__version__}")
 
 try:
     import onnxruntime as ort
+
     print(f"ONNX Runtime 版本: {ort.__version__}")
     ONNX_AVAILABLE = True
 except ImportError:
@@ -41,14 +42,18 @@ def parse_args():
     parser.add_argument("--seq-length", type=int, default=128, help="Sequence length")
     parser.add_argument("--num-warmup", type=int, default=10, help="Warmup iterations")
     parser.add_argument("--num-test", type=int, default=50, help="Test iterations")
-    parser.add_argument("--output", type=str, default="./results/bert_tf_vs_onnx_fixed", help="Output directory")
-    parser.add_argument("--use-saved-model", action="store_true", help="Use SavedModel instead of KerasLayer")
+    parser.add_argument(
+        "--output", type=str, default="./results/bert_tf_vs_onnx_fixed", help="Output directory"
+    )
+    parser.add_argument(
+        "--use-saved-model", action="store_true", help="Use SavedModel instead of KerasLayer"
+    )
     return parser.parse_args()
 
 
 def create_test_data(num_samples, seq_length, batch_size=1):
     """创建模拟的测试数据"""
-    print(f"\n创建测试数据...")
+    print("\n创建测试数据...")
     print(f"  样本数: {num_samples}")
     print(f"  序列长度: {seq_length}")
     print(f"  Batch size: {batch_size}")
@@ -58,7 +63,7 @@ def create_test_data(num_samples, seq_length, batch_size=1):
     input_mask = np.ones((num_samples, seq_length), dtype=np.int32)
     input_type_ids = np.zeros((num_samples, seq_length), dtype=np.int32)
 
-    print(f"✓ 测试数据准备完成")
+    print("✓ 测试数据准备完成")
 
     return {
         "input_word_ids": input_word_ids,
@@ -92,8 +97,8 @@ def load_bert_with_savedmodel(model_cache_dir, seq_length):
         print("✓ BERT SavedModel 加载成功")
 
         # 获取签名
-        serving_fn = bert_model.signatures['serving_default']
-        print(f"✓ 获取serving签名")
+        serving_fn = bert_model.signatures["serving_default"]
+        print("✓ 获取serving签名")
         print(f"  输入: {list(serving_fn.structured_input_signature[1].keys())}")
         print(f"  输出: {list(serving_fn.structured_outputs.keys())}")
 
@@ -114,15 +119,15 @@ def benchmark_tensorflow_savedmodel(serving_fn, test_data, num_warmup, num_test,
     print(f"\n热身运行: {num_warmup} iterations...")
     for i in range(num_warmup):
         inputs = {
-            'input_word_ids': tf.constant(test_data["input_word_ids"][i:i+batch_size]),
-            'input_mask': tf.constant(test_data["input_mask"][i:i+batch_size]),
-            'input_type_ids': tf.constant(test_data["input_type_ids"][i:i+batch_size]),
+            "input_word_ids": tf.constant(test_data["input_word_ids"][i : i + batch_size]),
+            "input_mask": tf.constant(test_data["input_mask"][i : i + batch_size]),
+            "input_type_ids": tf.constant(test_data["input_type_ids"][i : i + batch_size]),
         }
         _ = serving_fn(**inputs)
         if (i + 1) % 5 == 0:
             print(f"  Warmup: {i+1}/{num_warmup}")
 
-    print(f"✓ 热身完成")
+    print("✓ 热身完成")
 
     # 性能测试
     print(f"\n性能测试: {num_test} iterations...")
@@ -130,9 +135,9 @@ def benchmark_tensorflow_savedmodel(serving_fn, test_data, num_warmup, num_test,
 
     for i in range(num_test):
         inputs = {
-            'input_word_ids': tf.constant(test_data["input_word_ids"][i:i+batch_size]),
-            'input_mask': tf.constant(test_data["input_mask"][i:i+batch_size]),
-            'input_type_ids': tf.constant(test_data["input_type_ids"][i:i+batch_size]),
+            "input_word_ids": tf.constant(test_data["input_word_ids"][i : i + batch_size]),
+            "input_mask": tf.constant(test_data["input_mask"][i : i + batch_size]),
+            "input_type_ids": tf.constant(test_data["input_type_ids"][i : i + batch_size]),
         }
 
         start = time.perf_counter()
@@ -161,8 +166,8 @@ def benchmark_tensorflow_savedmodel(serving_fn, test_data, num_warmup, num_test,
         "throughput_samples_per_sec": batch_size * num_test / (np.sum(latencies_np) / 1000),
     }
 
-    print(f"\n✓ TensorFlow SavedModel 测试完成!")
-    print(f"\n结果:")
+    print("\n✓ TensorFlow SavedModel 测试完成!")
+    print("\n结果:")
     print(f"  延迟 (mean):   {results['latency_mean_ms']:.2f} ms")
     print(f"  延迟 (median): {results['latency_median_ms']:.2f} ms")
     print(f"  延迟 (p95):    {results['latency_p95_ms']:.2f} ms")
@@ -194,7 +199,7 @@ def convert_savedmodel_to_onnx(bert_model_path, output_path, seq_length):
 
         model_proto, _ = tf2onnx.convert.from_saved_model(
             str(bert_model_path),
-            input_names=['input_word_ids:0', 'input_mask:0', 'input_type_ids:0'],
+            input_names=["input_word_ids:0", "input_mask:0", "input_type_ids:0"],
             output_names=None,  # 自动检测
             opset=13,
             extra_opset=None,
@@ -238,24 +243,22 @@ def benchmark_onnx(onnx_model_path, test_data, num_warmup, num_test, batch_size)
         session_options.intra_op_num_threads = os.cpu_count()
         session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
-        providers = ['CPUExecutionProvider']
+        providers = ["CPUExecutionProvider"]
 
         print(f"\n加载ONNX模型: {onnx_model_path}")
         print(f"  线程数: {session_options.intra_op_num_threads}")
-        print(f"  优化级别: ORT_ENABLE_ALL")
+        print("  优化级别: ORT_ENABLE_ALL")
         print(f"  执行提供者: {providers}")
 
         session = ort.InferenceSession(
-            str(onnx_model_path),
-            sess_options=session_options,
-            providers=providers
+            str(onnx_model_path), sess_options=session_options, providers=providers
         )
 
         # 获取输入/输出信息
         input_names = [inp.name for inp in session.get_inputs()]
         output_names = [out.name for out in session.get_outputs()]
 
-        print(f"✓ ONNX Runtime 会话创建成功")
+        print("✓ ONNX Runtime 会话创建成功")
         print(f"  输入: {input_names}")
         print(f"  输出数量: {len(output_names)}")
 
@@ -263,15 +266,15 @@ def benchmark_onnx(onnx_model_path, test_data, num_warmup, num_test, batch_size)
         print(f"\n热身运行: {num_warmup} iterations...")
         for i in range(num_warmup):
             inputs = {
-                input_names[0]: test_data["input_word_ids"][i:i+batch_size],
-                input_names[1]: test_data["input_mask"][i:i+batch_size],
-                input_names[2]: test_data["input_type_ids"][i:i+batch_size],
+                input_names[0]: test_data["input_word_ids"][i : i + batch_size],
+                input_names[1]: test_data["input_mask"][i : i + batch_size],
+                input_names[2]: test_data["input_type_ids"][i : i + batch_size],
             }
             _ = session.run(None, inputs)
             if (i + 1) % 5 == 0:
                 print(f"  Warmup: {i+1}/{num_warmup}")
 
-        print(f"✓ 热身完成")
+        print("✓ 热身完成")
 
         # 性能测试
         print(f"\n性能测试: {num_test} iterations...")
@@ -279,9 +282,9 @@ def benchmark_onnx(onnx_model_path, test_data, num_warmup, num_test, batch_size)
 
         for i in range(num_test):
             inputs = {
-                input_names[0]: test_data["input_word_ids"][i:i+batch_size],
-                input_names[1]: test_data["input_mask"][i:i+batch_size],
-                input_names[2]: test_data["input_type_ids"][i:i+batch_size],
+                input_names[0]: test_data["input_word_ids"][i : i + batch_size],
+                input_names[1]: test_data["input_mask"][i : i + batch_size],
+                input_names[2]: test_data["input_type_ids"][i : i + batch_size],
             }
 
             start = time.perf_counter()
@@ -310,8 +313,8 @@ def benchmark_onnx(onnx_model_path, test_data, num_warmup, num_test, batch_size)
             "throughput_samples_per_sec": batch_size * num_test / (np.sum(latencies_np) / 1000),
         }
 
-        print(f"\n✓ ONNX Runtime 测试完成!")
-        print(f"\n结果:")
+    print("\n✓ ONNX Runtime 测试完成!")
+    print("\n结果:")
         print(f"  延迟 (mean):   {results['latency_mean_ms']:.2f} ms")
         print(f"  延迟 (median): {results['latency_median_ms']:.2f} ms")
         print(f"  延迟 (p95):    {results['latency_p95_ms']:.2f} ms")
@@ -338,7 +341,7 @@ def generate_comparison_report(tf_results, onnx_results, output_dir, config):
         f.write("**测试方法**: 使用SavedModel直接加载，避免KerasLayer问题\n\n")
 
         f.write("## 测试配置\n\n")
-        f.write(f"- **模型**: BERT-base (TensorFlow Hub SavedModel)\n")
+        f.write("- **模型**: BERT-base (TensorFlow Hub SavedModel)\n")
         f.write(f"- **Batch Size**: {config['batch_size']}\n")
         f.write(f"- **序列长度**: {config['seq_length']}\n")
         f.write(f"- **热身迭代**: {config['num_warmup']}\n")
@@ -352,20 +355,39 @@ def generate_comparison_report(tf_results, onnx_results, output_dir, config):
 
         if onnx_results:
             # 计算加速比
-            speedup_mean = tf_results['latency_mean_ms'] / onnx_results['latency_mean_ms']
-            speedup_p95 = tf_results['latency_p95_ms'] / onnx_results['latency_p95_ms']
-            speedup_throughput = onnx_results['throughput_samples_per_sec'] / tf_results['throughput_samples_per_sec']
+            speedup_mean = tf_results["latency_mean_ms"] / onnx_results["latency_mean_ms"]
+            speedup_p95 = tf_results["latency_p95_ms"] / onnx_results["latency_p95_ms"]
+            speedup_throughput = (
+                onnx_results["throughput_samples_per_sec"]
+                / tf_results["throughput_samples_per_sec"]
+            )
 
             f.write("| 指标 | TensorFlow | ONNX Runtime | 加速比 |\n")
             f.write("|------|------------|--------------|--------|\n")
-            f.write(f"| 延迟 (mean) | {tf_results['latency_mean_ms']:.2f} ms | {onnx_results['latency_mean_ms']:.2f} ms | {speedup_mean:.2f}x |\n")
-            f.write(f"| 延迟 (median) | {tf_results['latency_median_ms']:.2f} ms | {onnx_results['latency_median_ms']:.2f} ms | {tf_results['latency_median_ms']/onnx_results['latency_median_ms']:.2f}x |\n")
-            f.write(f"| 延迟 (std) | {tf_results['latency_std_ms']:.2f} ms | {onnx_results['latency_std_ms']:.2f} ms | - |\n")
-            f.write(f"| 延迟 (min) | {tf_results['latency_min_ms']:.2f} ms | {onnx_results['latency_min_ms']:.2f} ms | - |\n")
-            f.write(f"| 延迟 (max) | {tf_results['latency_max_ms']:.2f} ms | {onnx_results['latency_max_ms']:.2f} ms | - |\n")
-            f.write(f"| 延迟 (p95) | {tf_results['latency_p95_ms']:.2f} ms | {onnx_results['latency_p95_ms']:.2f} ms | {speedup_p95:.2f}x |\n")
-            f.write(f"| 延迟 (p99) | {tf_results['latency_p99_ms']:.2f} ms | {onnx_results['latency_p99_ms']:.2f} ms | {tf_results['latency_p99_ms']/onnx_results['latency_p99_ms']:.2f}x |\n")
-            f.write(f"| 吞吐量 | {tf_results['throughput_samples_per_sec']:.2f} samples/s | {onnx_results['throughput_samples_per_sec']:.2f} samples/s | {speedup_throughput:.2f}x |\n\n")
+            f.write(
+                f"| 延迟 (mean) | {tf_results['latency_mean_ms']:.2f} ms | {onnx_results['latency_mean_ms']:.2f} ms | {speedup_mean:.2f}x |\n"
+            )
+            f.write(
+                f"| 延迟 (median) | {tf_results['latency_median_ms']:.2f} ms | {onnx_results['latency_median_ms']:.2f} ms | {tf_results['latency_median_ms']/onnx_results['latency_median_ms']:.2f}x |\n"
+            )
+            f.write(
+                f"| 延迟 (std) | {tf_results['latency_std_ms']:.2f} ms | {onnx_results['latency_std_ms']:.2f} ms | - |\n"
+            )
+            f.write(
+                f"| 延迟 (min) | {tf_results['latency_min_ms']:.2f} ms | {onnx_results['latency_min_ms']:.2f} ms | - |\n"
+            )
+            f.write(
+                f"| 延迟 (max) | {tf_results['latency_max_ms']:.2f} ms | {onnx_results['latency_max_ms']:.2f} ms | - |\n"
+            )
+            f.write(
+                f"| 延迟 (p95) | {tf_results['latency_p95_ms']:.2f} ms | {onnx_results['latency_p95_ms']:.2f} ms | {speedup_p95:.2f}x |\n"
+            )
+            f.write(
+                f"| 延迟 (p99) | {tf_results['latency_p99_ms']:.2f} ms | {onnx_results['latency_p99_ms']:.2f} ms | {tf_results['latency_p99_ms']/onnx_results['latency_p99_ms']:.2f}x |\n"
+            )
+            f.write(
+                f"| 吞吐量 | {tf_results['throughput_samples_per_sec']:.2f} samples/s | {onnx_results['throughput_samples_per_sec']:.2f} samples/s | {speedup_throughput:.2f}x |\n\n"
+            )
 
             f.write("## 总结\n\n")
             if speedup_mean > 1.0:
@@ -380,13 +402,13 @@ def generate_comparison_report(tf_results, onnx_results, output_dir, config):
             # 性能分析
             f.write("### 性能分析\n\n")
             if speedup_mean >= 1.5:
-                f.write(f"🚀 ONNX Runtime显著优于TensorFlow，推荐用于生产环境部署。\n\n")
+            f.write("🚀 ONNX Runtime显著优于TensorFlow，推荐用于生产环境部署。\n\n")
             elif speedup_mean >= 1.1:
-                f.write(f"✅ ONNX Runtime性能优于TensorFlow，适合对延迟敏感的场景。\n\n")
+            f.write("✅ ONNX Runtime性能优于TensorFlow，适合对延迟敏感的场景。\n\n")
             elif speedup_mean >= 0.9:
-                f.write(f"⚖️ 两个引擎性能相当，可根据其他因素选择。\n\n")
+            f.write("⚖️ 两个引擎性能相当，可根据其他因素选择。\n\n")
             else:
-                f.write(f"⚠️ TensorFlow在此配置下性能更好。\n\n")
+            f.write("⚠️ TensorFlow在此配置下性能更好。\n\n")
 
         else:
             # 仅有TensorFlow结果
@@ -396,7 +418,9 @@ def generate_comparison_report(tf_results, onnx_results, output_dir, config):
             f.write(f"| 延迟 (median) | {tf_results['latency_median_ms']:.2f} ms | N/A |\n")
             f.write(f"| 延迟 (p95) | {tf_results['latency_p95_ms']:.2f} ms | N/A |\n")
             f.write(f"| 延迟 (p99) | {tf_results['latency_p99_ms']:.2f} ms | N/A |\n")
-            f.write(f"| 吞吐量 | {tf_results['throughput_samples_per_sec']:.2f} samples/s | N/A |\n\n")
+            f.write(
+                f"| 吞吐量 | {tf_results['throughput_samples_per_sec']:.2f} samples/s | N/A |\n\n"
+            )
 
             f.write("## 说明\n\n")
             f.write("⚠️ ONNX模型转换或测试失败，仅显示TensorFlow结果。\n\n")
@@ -440,9 +464,7 @@ def main():
 
     # 创建测试数据
     test_data = create_test_data(
-        num_samples=args.num_test,
-        seq_length=args.seq_length,
-        batch_size=args.batch_size
+        num_samples=args.num_test, seq_length=args.seq_length, batch_size=args.batch_size
     )
 
     # 加载BERT模型 (SavedModel方式)
@@ -466,7 +488,7 @@ def main():
         test_data=test_data,
         num_warmup=args.num_warmup,
         num_test=args.num_test,
-        batch_size=args.batch_size
+        batch_size=args.batch_size,
     )
 
     # 保存TensorFlow结果
@@ -481,17 +503,15 @@ def main():
 
     if ONNX_AVAILABLE:
         # 获取SavedModel路径
-        model_path = Path(hub.resolve(
-            "https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/4"
-        ))
+        model_path = Path(
+            hub.resolve("https://tfhub.dev/tensorflow/bert_en_uncased_L-12_H-768_A-12/4")
+        )
 
         # 转换为ONNX
         onnx_model_path = output_dir / "bert_model.onnx"
         if not onnx_model_path.exists():
             onnx_model_path = convert_savedmodel_to_onnx(
-                model_path,
-                onnx_model_path,
-                args.seq_length
+                model_path, onnx_model_path, args.seq_length
             )
         else:
             print(f"\n✓ ONNX模型已存在: {onnx_model_path}")
@@ -503,7 +523,7 @@ def main():
                 test_data=test_data,
                 num_warmup=args.num_warmup,
                 num_test=args.num_test,
-                batch_size=args.batch_size
+                batch_size=args.batch_size,
             )
 
             if onnx_results:
@@ -512,8 +532,8 @@ def main():
                     json.dump(onnx_results, f, indent=2)
                 print(f"\n✓ ONNX结果已保存到: {onnx_result_file}")
     else:
-        print(f"\n⚠️ ONNX Runtime未安装，跳过ONNX测试")
-        print(f"   安装方法: pip install onnxruntime tf2onnx")
+        print("\n⚠️ ONNX Runtime未安装，跳过ONNX测试")
+        print("   安装方法: pip install onnxruntime tf2onnx")
 
     # 生成对比报告
     config = {
@@ -529,22 +549,22 @@ def main():
     print(f"\n{'='*70}")
     print("✓ BERT 性能对比测试完成!")
     print(f"{'='*70}")
-    print(f"\n结果文件:")
+    print("\n结果文件:")
     print(f"  - TensorFlow SavedModel: {tf_result_file}")
     if onnx_result_file:
         print(f"  - ONNX Runtime: {onnx_result_file}")
     print(f"  - 对比报告: {report_file}")
-    print(f"\n说明:")
-    print(f"  ✅ 成功使用SavedModel方式加载BERT")
-    print(f"  ✅ 避免了KerasLayer的KerasTensor问题")
+    print("\n说明:")
+    print("  ✅ 成功使用SavedModel方式加载BERT")
+    print("  ✅ 避免了KerasLayer的KerasTensor问题")
     if onnx_results:
-        speedup = tf_results['latency_mean_ms'] / onnx_results['latency_mean_ms']
+        speedup = tf_results["latency_mean_ms"] / onnx_results["latency_mean_ms"]
         if speedup > 1.0:
             print(f"  🚀 ONNX Runtime 比 TensorFlow 快 {speedup:.2f}x")
         else:
             print(f"  ℹ️ TensorFlow 比 ONNX Runtime 快 {1/speedup:.2f}x")
     else:
-        print(f"  ⚠️ ONNX测试未运行")
+        print("  ⚠️ ONNX测试未运行")
     print(f"\n{'='*70}")
 
 

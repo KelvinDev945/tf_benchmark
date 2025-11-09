@@ -5,11 +5,12 @@ Note: These tests use mock data to avoid downloading large datasets.
 Full integration tests can be run separately.
 """
 
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pytest
 import tensorflow as tf
 from PIL import Image
-from unittest.mock import MagicMock, patch
 
 
 class TestImageDatasetLoader:
@@ -88,9 +89,7 @@ class TestImageDatasetLoader:
         """Test string representation."""
         from src.dataset import ImageDatasetLoader
 
-        loader = ImageDatasetLoader(
-            dataset_name="test-dataset", split="train", num_samples=50
-        )
+        loader = ImageDatasetLoader(dataset_name="test-dataset", split="train", num_samples=50)
 
         repr_str = repr(loader)
         assert "ImageDatasetLoader" in repr_str

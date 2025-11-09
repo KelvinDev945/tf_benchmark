@@ -204,13 +204,9 @@ class TextDatasetLoader:
             # Concatenate with [SEP] token
             return f"{sample['sentence1']} {self.tokenizer.sep_token} {sample['sentence2']}"
 
-        raise ValueError(
-            f"Cannot find text field in sample. Available fields: {sample.keys()}"
-        )
+        raise ValueError(f"Cannot find text field in sample. Available fields: {sample.keys()}")
 
-    def _tokenize_sample(
-        self, sample: Dict, max_length: Optional[int] = None
-    ) -> Dict:
+    def _tokenize_sample(self, sample: Dict, max_length: Optional[int] = None) -> Dict:
         """
         Tokenize a single sample.
 
@@ -223,9 +219,7 @@ class TextDatasetLoader:
         """
         text = self._get_text_field(sample)
 
-        encoding = self.tokenize(
-            text, max_length=max_length, padding="max_length", truncation=True
-        )
+        encoding = self.tokenize(text, max_length=max_length, padding="max_length", truncation=True)
 
         result = {
             "input_ids": encoding["input_ids"],
@@ -278,15 +272,11 @@ class TextDatasetLoader:
                 # Prepare output
                 inputs = {
                     "input_ids": np.array(tokenized["input_ids"], dtype=np.int32),
-                    "attention_mask": np.array(
-                        tokenized["attention_mask"], dtype=np.int32
-                    ),
+                    "attention_mask": np.array(tokenized["attention_mask"], dtype=np.int32),
                 }
 
                 if "token_type_ids" in tokenized:
-                    inputs["token_type_ids"] = np.array(
-                        tokenized["token_type_ids"], dtype=np.int32
-                    )
+                    inputs["token_type_ids"] = np.array(tokenized["token_type_ids"], dtype=np.int32)
 
                 if "label" in tokenized:
                     yield inputs, tokenized["label"]
@@ -300,12 +290,11 @@ class TextDatasetLoader:
         }
 
         # Add token_type_ids if tokenizer supports it
-        if hasattr(self.tokenizer, "token_type_ids") or "bert" in str(
-            self.tokenizer.__class__.__name__
-        ).lower():
-            output_signature["token_type_ids"] = tf.TensorSpec(
-                shape=(max_length,), dtype=tf.int32
-            )
+        if (
+            hasattr(self.tokenizer, "token_type_ids")
+            or "bert" in str(self.tokenizer.__class__.__name__).lower()
+        ):
+            output_signature["token_type_ids"] = tf.TensorSpec(shape=(max_length,), dtype=tf.int32)
 
         # Add label if available
         if "label" in self.dataset.features:
@@ -317,9 +306,7 @@ class TextDatasetLoader:
             full_signature = (output_signature,)
 
         # Create TensorFlow dataset
-        tf_dataset = tf.data.Dataset.from_generator(
-            generator, output_signature=full_signature
-        )
+        tf_dataset = tf.data.Dataset.from_generator(generator, output_signature=full_signature)
 
         # Shuffle if requested
         if shuffle:
@@ -405,15 +392,11 @@ class TextDatasetLoader:
         # Convert to numpy arrays
         result = {
             "input_ids": np.concatenate(all_input_ids, axis=0).astype(np.int32),
-            "attention_mask": np.concatenate(all_attention_masks, axis=0).astype(
-                np.int32
-            ),
+            "attention_mask": np.concatenate(all_attention_masks, axis=0).astype(np.int32),
         }
 
         if has_token_type_ids:
-            result["token_type_ids"] = np.concatenate(
-                all_token_type_ids, axis=0
-            ).astype(np.int32)
+            result["token_type_ids"] = np.concatenate(all_token_type_ids, axis=0).astype(np.int32)
 
         if has_labels:
             result["labels"] = np.array(all_labels, dtype=np.int32)

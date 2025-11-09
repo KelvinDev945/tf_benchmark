@@ -9,15 +9,16 @@ Usage:
     python3 scripts/demo_bert_tf_only.py
 """
 
-import numpy as np
-import tensorflow as tf
-import tensorflow_hub as hub
 import time
 from pathlib import Path
 
-print("="*70)
+import numpy as np
+import tensorflow as tf
+import tensorflow_hub as hub
+
+print("=" * 70)
 print("BERT TensorFlow-Only Benchmark Demo")
-print("="*70)
+print("=" * 70)
 print(f"TensorFlow version: {tf.__version__}")
 print(f"TensorFlow Hub version: {hub.__version__}")
 print()
@@ -45,26 +46,30 @@ try:
     print("✓ BERT模型加载成功")
 
     # 创建一个简单的分类模型
-    input_word_ids = tf.keras.layers.Input(shape=(SEQ_LENGTH,), dtype=tf.int32, name="input_word_ids")
+    input_word_ids = tf.keras.layers.Input(
+        shape=(SEQ_LENGTH,), dtype=tf.int32, name="input_word_ids"
+    )
     input_mask = tf.keras.layers.Input(shape=(SEQ_LENGTH,), dtype=tf.int32, name="input_mask")
-    input_type_ids = tf.keras.layers.Input(shape=(SEQ_LENGTH,), dtype=tf.int32, name="input_type_ids")
+    input_type_ids = tf.keras.layers.Input(
+        shape=(SEQ_LENGTH,), dtype=tf.int32, name="input_type_ids"
+    )
 
     # BERT编码
     bert_inputs = {
         "input_word_ids": input_word_ids,
         "input_mask": input_mask,
-        "input_type_ids": input_type_ids
+        "input_type_ids": input_type_ids,
     }
 
     bert_outputs = bert_layer(bert_inputs)
     pooled_output = bert_outputs["pooled_output"]
 
     # 添加分类层
-    output = tf.keras.layers.Dense(2, activation='softmax')(pooled_output)
+    output = tf.keras.layers.Dense(2, activation="softmax")(pooled_output)
 
     model = tf.keras.Model(inputs=[input_word_ids, input_mask, input_type_ids], outputs=output)
 
-    print(f"✓ 模型构建完成")
+print("✓ 模型构建完成")
     print(f"  参数总数: {model.count_params():,}")
 
     # 创建模拟测试数据
@@ -86,9 +91,9 @@ try:
     print(f"\nWarmup: {NUM_WARMUP} iterations...")
     for i in range(NUM_WARMUP):
         batch_data = [
-            test_data["input_word_ids"][i:i+1],
-            test_data["input_mask"][i:i+1],
-            test_data["input_type_ids"][i:i+1],
+            test_data["input_word_ids"][i : i + 1],
+            test_data["input_mask"][i : i + 1],
+            test_data["input_type_ids"][i : i + 1],
         ]
         _ = model(batch_data, training=False)
 
@@ -97,9 +102,9 @@ try:
 
     for i in range(NUM_TEST):
         batch_data = [
-            test_data["input_word_ids"][i:i+1],
-            test_data["input_mask"][i:i+1],
-            test_data["input_type_ids"][i:i+1],
+            test_data["input_word_ids"][i : i + 1],
+            test_data["input_mask"][i : i + 1],
+            test_data["input_type_ids"][i : i + 1],
         ]
 
         start = time.time()
@@ -128,8 +133,8 @@ try:
         "throughput_samples_per_sec": NUM_TEST / np.sum(latencies_np) * 1000,
     }
 
-    print(f"\n✓ 测试完成!")
-    print(f"\n结果:")
+print("\n✓ 测试完成!")
+print("\n结果:")
     print(f"  延迟 (mean):   {results['latency_mean']:.2f} ms")
     print(f"  延迟 (median): {results['latency_median']:.2f} ms")
     print(f"  延迟 (p95):    {results['latency_p95']:.2f} ms")
@@ -151,7 +156,7 @@ try:
         f.write("# BERT TensorFlow Benchmark Demo\n\n")
         f.write("## 配置\n\n")
         f.write(f"- **模型**: {results['model']}\n")
-        f.write(f"- **引擎**: TensorFlow (纯TF，无PyTorch)\n")
+        f.write("- **引擎**: TensorFlow (纯TF，无PyTorch)\n")
         f.write(f"- **Batch Size**: {BATCH_SIZE}\n")
         f.write(f"- **序列长度**: {SEQ_LENGTH}\n")
         f.write(f"- **测试迭代**: {NUM_TEST}\n\n")
@@ -179,7 +184,8 @@ try:
 except Exception as e:
     print(f"\n✗ 错误: {e}")
     import traceback
+
     traceback.print_exc()
 
-    print(f"\n说明: TensorFlow Hub模型需要网络下载。")
-    print(f"如果下载失败，请检查网络连接或使用代理。")
+print("\n说明: TensorFlow Hub模型需要网络下载。")
+print("如果下载失败，请检查网络连接或使用代理。")

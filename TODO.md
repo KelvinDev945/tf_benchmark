@@ -83,7 +83,7 @@ Invalid model_path type: TFBertForSequenceClassification.
 Expected str or tf.keras.Model
 ```
 
-**根本原因**: 
+**根本原因**:
 - HuggingFace 的 `TFBertForSequenceClassification` 不是 `tf.keras.Model` 的直接实例
 - 当前代码使用 `isinstance(model_path, tf.keras.Model)` 检查失败
 - Transformers 模型虽然基于 Keras，但有自己的基类
@@ -630,4 +630,3 @@ Loading a PyTorch model in TensorFlow, requires both PyTorch and TensorFlow to b
 ---
 
 **维护者**: 请定期更新此文档，标记已完成的任务 ✅
-

@@ -31,7 +31,6 @@ from engines.onnx_engine import ONNXEngine
 from engines.tensorflow_engine import TensorFlowEngine
 from engines.tflite_engine import TFLiteEngine
 from models.model_converter import ModelConverter
-from models.model_loader import ModelLoader
 
 
 class BERTBenchmarkComparison:
@@ -71,7 +70,7 @@ class BERTBenchmarkComparison:
         self.models_dir.mkdir(exist_ok=True)
 
         print(f"\n{'='*70}")
-        print(f"BERT Model Inference Speed Comparison")
+        print("BERT Model Inference Speed Comparison")
         print(f"{'='*70}")
         print(f"Model: {model_name}")
         print(f"Mode: {mode}")
@@ -88,7 +87,7 @@ class BERTBenchmarkComparison:
         Returns:
             Test dataset
         """
-        print(f"\n📊 Loading dataset...")
+        print("\n📊 Loading dataset...")
 
         dataset_config = self.config.get("dataset", {}).get("text", {})
         dataset_loader = TextDatasetLoader(
@@ -131,18 +130,17 @@ class BERTBenchmarkComparison:
         # Load base TensorFlow model (h5 format, no PyTorch needed)
         print("Loading TensorFlow model (h5 format)...")
         from transformers import TFBertForSequenceClassification
+
         model = TFBertForSequenceClassification.from_pretrained(
             self.model_name,
             num_labels=2,
             from_pt=False,
-            use_safetensors=False  # 使用h5格式的TensorFlow权重
+            use_safetensors=False,  # 使用h5格式的TensorFlow权重
         )
         print(f"✓ Loaded model with {model.count_params():,} parameters")
 
         # Initialize TensorFlow engine with baseline config
-        engine = TensorFlowEngine(
-            config={"xla": False, "mixed_precision": False}
-        )
+        engine = TensorFlowEngine(config={"xla": False, "mixed_precision": False})
         engine.load_model(model)
 
         # Run benchmark
@@ -174,11 +172,12 @@ class BERTBenchmarkComparison:
         # Load base TensorFlow model (h5 format, no PyTorch needed)
         print("\nLoading TensorFlow model for conversion (h5 format)...")
         from transformers import TFBertForSequenceClassification
+
         base_model = TFBertForSequenceClassification.from_pretrained(
             self.model_name,
             num_labels=2,
             from_pt=False,
-            use_safetensors=False  # 使用h5格式的TensorFlow权重
+            use_safetensors=False,  # 使用h5格式的TensorFlow权重
         )
         print(f"✓ Loaded model with {base_model.count_params():,} parameters")
 
@@ -248,11 +247,12 @@ class BERTBenchmarkComparison:
         # Load base TensorFlow model (h5 format, no PyTorch needed)
         print("\nLoading TensorFlow model for conversion (h5 format)...")
         from transformers import TFBertForSequenceClassification
+
         base_model = TFBertForSequenceClassification.from_pretrained(
             self.model_name,
             num_labels=2,
             from_pt=False,
-            use_safetensors=False  # 使用h5格式的TensorFlow权重
+            use_safetensors=False,  # 使用h5格式的TensorFlow权重
         )
         print(f"✓ Loaded model with {base_model.count_params():,} parameters")
 
@@ -266,7 +266,7 @@ class BERTBenchmarkComparison:
                 output_path=str(onnx_path),
                 opset=13,
             )
-            print(f"✓ Converted to ONNX")
+        print("✓ Converted to ONNX")
             print(f"  Model size: {metadata.get('model_size_mb', 0):.2f} MB")
         else:
             print(f"✓ Using cached ONNX model: {onnx_path}")
@@ -300,9 +300,7 @@ class BERTBenchmarkComparison:
 
         return results
 
-    def _prepare_calibration_data(
-        self, test_data: Dict[str, np.ndarray], num_samples: int = 100
-    ):
+    def _prepare_calibration_data(self, test_data: Dict[str, np.ndarray], num_samples: int = 100):
         """
         Prepare calibration data for quantization.
 
@@ -416,11 +414,13 @@ class BERTBenchmarkComparison:
             "timestamp": time.time(),
         }
 
-        print(f"\n✓ Results:")
+        print("\n✓ Results:")
         print(f"  Latency (mean): {results['statistics']['latency_mean']:.2f} ms")
         print(f"  Latency (p50): {results['statistics']['latency_p50']:.2f} ms")
         print(f"  Latency (p95): {results['statistics']['latency_p95']:.2f} ms")
-        print(f"  Throughput: {results['statistics']['throughput_samples_per_sec']:.2f} samples/sec")
+        print(
+            f"  Throughput: {results['statistics']['throughput_samples_per_sec']:.2f} samples/sec"
+        )
 
         return results
 
@@ -478,7 +478,7 @@ class BERTBenchmarkComparison:
         report_file = self.output_dir / "bert_comparison_report.md"
 
         with open(report_file, "w") as f:
-            f.write(f"# BERT Model Inference Speed Comparison\n\n")
+            f.write("# BERT Model Inference Speed Comparison\n\n")
             f.write(f"**Model**: {self.model_name}\n")
             f.write(f"**Mode**: {self.mode}\n")
             f.write(f"**Timestamp**: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
@@ -509,7 +509,9 @@ class BERTBenchmarkComparison:
             fastest = min(self.results, key=lambda x: x["statistics"]["latency_mean"])
             f.write(f"**Fastest Configuration**: {fastest['engine']}\n")
             f.write(f"- Latency: {fastest['statistics']['latency_mean']:.2f} ms\n")
-            f.write(f"- Throughput: {fastest['statistics']['throughput_samples_per_sec']:.2f} samples/sec\n\n")
+            f.write(
+                f"- Throughput: {fastest['statistics']['throughput_samples_per_sec']:.2f} samples/sec\n\n"
+            )
 
             # Calculate speedups
             baseline = next((r for r in self.results if "baseline" in r["engine"]), None)
@@ -527,9 +529,7 @@ class BERTBenchmarkComparison:
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="BERT Model Inference Speed Comparison"
-    )
+    parser = argparse.ArgumentParser(description="BERT Model Inference Speed Comparison")
     parser.add_argument(
         "--model",
         type=str,

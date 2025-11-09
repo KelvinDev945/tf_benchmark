@@ -61,7 +61,7 @@ class TFLiteEngine(BaseInferenceEngine):
                 self.interpreter = tf.lite.Interpreter(
                     model_content=model_path, num_threads=num_threads
                 )
-                print(f"✓ Loaded TFLite model from bytes")
+                print("✓ Loaded TFLite model from bytes")
             elif isinstance(model_path, str):
                 # Load from file path
                 self.interpreter = tf.lite.Interpreter(
@@ -70,8 +70,7 @@ class TFLiteEngine(BaseInferenceEngine):
                 print(f"✓ Loaded TFLite model from {model_path}")
             else:
                 raise ModelLoadError(
-                    f"Invalid model_path type: {type(model_path)}. "
-                    "Expected str or bytes"
+                    f"Invalid model_path type: {type(model_path)}. " "Expected str or bytes"
                 )
 
             # Allocate tensors
@@ -163,17 +162,13 @@ class TFLiteEngine(BaseInferenceEngine):
                 input_data = input_data.astype(input_dtype)
 
             # Set input tensor
-            self.interpreter.set_tensor(
-                self.input_details[0]["index"], input_data
-            )
+            self.interpreter.set_tensor(self.input_details[0]["index"], input_data)
 
             # Run inference
             self.interpreter.invoke()
 
             # Get output tensor
-            output_data = self.interpreter.get_tensor(
-                self.output_details[0]["index"]
-            )
+            output_data = self.interpreter.get_tensor(self.output_details[0]["index"])
 
             return output_data
 
@@ -228,13 +223,21 @@ class TFLiteEngine(BaseInferenceEngine):
 
             if input_quantization:
                 info["input_quantized"] = True
-                info["input_scale"] = float(input_quantization[0]) if input_quantization[0] else None
-                info["input_zero_point"] = int(input_quantization[1]) if input_quantization[1] else None
+                info["input_scale"] = (
+                    float(input_quantization[0]) if input_quantization[0] else None
+                )
+                info["input_zero_point"] = (
+                    int(input_quantization[1]) if input_quantization[1] else None
+                )
 
             if output_quantization:
                 info["output_quantized"] = True
-                info["output_scale"] = float(output_quantization[0]) if output_quantization[0] else None
-                info["output_zero_point"] = int(output_quantization[1]) if output_quantization[1] else None
+                info["output_scale"] = (
+                    float(output_quantization[0]) if output_quantization[0] else None
+                )
+                info["output_zero_point"] = (
+                    int(output_quantization[1]) if output_quantization[1] else None
+                )
 
         return info
 
@@ -274,9 +277,7 @@ def create_tflite_engine(optimization: str = "float32") -> TFLiteEngine:
 
     if optimization not in valid_optimizations:
         available = ", ".join(valid_optimizations)
-        raise ValueError(
-            f"Unknown optimization '{optimization}'. Available: {available}"
-        )
+        raise ValueError(f"Unknown optimization '{optimization}'. Available: {available}")
 
     config = {
         "optimization": optimization,

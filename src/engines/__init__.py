@@ -3,13 +3,13 @@
 from .base_engine import (
     BaseInferenceEngine,
     InferenceEngineError,
-    ModelLoadError,
     InferenceError,
+    ModelLoadError,
     WarmupError,
 )
+from .onnx_engine import ONNXEngine, create_onnx_engine
 from .tensorflow_engine import TensorFlowEngine, create_tensorflow_engine
 from .tflite_engine import TFLiteEngine, create_tflite_engine
-from .onnx_engine import ONNXEngine, create_onnx_engine
 
 # OpenVINO is only available on x86_64
 try:

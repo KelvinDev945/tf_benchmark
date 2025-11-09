@@ -5,7 +5,7 @@ This module implements the ONNX Runtime inference engine with
 various optimization configurations.
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import onnxruntime as ort
@@ -40,9 +40,7 @@ class ONNXEngine(BaseInferenceEngine):
         self.input_names = None
         self.output_names = None
 
-    def load_model(
-        self, model_path: str, config: Optional[Dict[str, Any]] = None
-    ) -> None:
+    def load_model(self, model_path: str, config: Optional[Dict[str, Any]] = None) -> None:
         """
         Load an ONNX model.
 
@@ -62,9 +60,7 @@ class ONNXEngine(BaseInferenceEngine):
 
             if mode == "optimized" or mode == "quantized":
                 # Graph optimization
-                graph_opt_level = self.config.get(
-                    "graph_optimization_level", "ENABLE_ALL"
-                )
+                graph_opt_level = self.config.get("graph_optimization_level", "ENABLE_ALL")
                 if graph_opt_level == "ENABLE_ALL":
                     sess_options.graph_optimization_level = (
                         ort.GraphOptimizationLevel.ORT_ENABLE_ALL
@@ -85,10 +81,7 @@ class ONNXEngine(BaseInferenceEngine):
 
                 sess_options.inter_op_num_threads = inter_op_threads
                 sess_options.intra_op_num_threads = intra_op_threads
-                print(
-                    f"✓ Threads: inter_op={inter_op_threads}, "
-                    f"intra_op={intra_op_threads}"
-                )
+                print(f"✓ Threads: inter_op={inter_op_threads}, " f"intra_op={intra_op_threads}")
 
                 # Execution mode
                 execution_mode = self.config.get("execution_mode", "PARALLEL")
@@ -102,9 +95,7 @@ class ONNXEngine(BaseInferenceEngine):
             providers = ["CPUExecutionProvider"]
 
             # Create inference session
-            self.session = ort.InferenceSession(
-                model_path, sess_options, providers=providers
-            )
+            self.session = ort.InferenceSession(model_path, sess_options, providers=providers)
 
             # Get input and output names
             self.input_names = [inp.name for inp in self.session.get_inputs()]
@@ -231,19 +222,23 @@ class ONNXEngine(BaseInferenceEngine):
             # Add input/output details
             inputs_info = []
             for inp in self.session.get_inputs():
-                inputs_info.append({
-                    "name": inp.name,
-                    "shape": inp.shape,
-                    "type": inp.type,
-                })
+                inputs_info.append(
+                    {
+                        "name": inp.name,
+                        "shape": inp.shape,
+                        "type": inp.type,
+                    }
+                )
 
             outputs_info = []
             for out in self.session.get_outputs():
-                outputs_info.append({
-                    "name": out.name,
-                    "shape": out.shape,
-                    "type": out.type,
-                })
+                outputs_info.append(
+                    {
+                        "name": out.name,
+                        "shape": out.shape,
+                        "type": out.type,
+                    }
+                )
 
             info["inputs"] = inputs_info
             info["outputs"] = outputs_info
@@ -332,8 +327,6 @@ def create_onnx_engine(mode: str = "default") -> ONNXEngine:
 
     if mode not in configs:
         available = ", ".join(configs.keys())
-        raise ValueError(
-            f"Unknown mode '{mode}'. Available: {available}"
-        )
+        raise ValueError(f"Unknown mode '{mode}'. Available: {available}")
 
     return ONNXEngine(config=configs[mode])

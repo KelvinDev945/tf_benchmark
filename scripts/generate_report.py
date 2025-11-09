@@ -14,7 +14,7 @@ import click
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from reporting import DataProcessor, BenchmarkVisualizer, ReportGenerator
+from reporting import BenchmarkVisualizer, DataProcessor, ReportGenerator
 
 
 @click.command()
@@ -58,7 +58,7 @@ def main(results_dir, output_dir, format):
         return 1
 
     # Step 2: Generate visualizations
-    print(f"\n📈 Generating visualizations...")
+    print("\n📈 Generating visualizations...")
     visualizer = BenchmarkVisualizer()
     plots_dir = output_dir / "plots"
 
@@ -69,7 +69,7 @@ def main(results_dir, output_dir, format):
         plots = []
 
     # Step 3: Generate reports
-    print(f"\n📝 Generating reports...")
+    print("\n📝 Generating reports...")
     generator = ReportGenerator()
 
     try:
@@ -90,7 +90,7 @@ def main(results_dir, output_dir, format):
         return 1
 
     # Step 4: Export summary CSV
-    print(f"\n💾 Exporting summary...")
+    print("\n💾 Exporting summary...")
     try:
         csv_path = output_dir / "summary.csv"
         processor.export_summary_csv(csv_path)
@@ -102,10 +102,10 @@ def main(results_dir, output_dir, format):
     print("✓ Report Generation Complete!")
     print("=" * 70)
     print(f"\n📁 Output directory: {output_dir}")
-    print(f"   - HTML report: report.html")
-    print(f"   - Markdown report: report.md")
-    print(f"   - Recommendations: recommendations.txt")
-    print(f"   - Summary CSV: summary.csv")
+    print("   - HTML report: report.html")
+    print("   - Markdown report: report.md")
+    print("   - Recommendations: recommendations.txt")
+    print("   - Summary CSV: summary.csv")
     print(f"   - Plots: plots/ ({len(plots)} files)")
     print()
 

@@ -8,7 +8,7 @@ benchmark configuration from YAML files.
 import os
 import platform
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Union
 
 import yaml
 
@@ -253,9 +253,7 @@ class ConfigLoader:
 
         modes = self.config["modes"]
         if mode not in modes:
-            raise ValueError(
-                f"Unknown mode '{mode}'. Available modes: {list(modes.keys())}"
-            )
+            raise ValueError(f"Unknown mode '{mode}'. Available modes: {list(modes.keys())}")
 
         # Create a copy of the main config
         mode_config = self.config.copy()
@@ -264,14 +262,10 @@ class ConfigLoader:
         mode_settings = modes[mode]
 
         if "warmup_iterations" in mode_settings:
-            mode_config["benchmark"]["warmup_iterations"] = mode_settings[
-                "warmup_iterations"
-            ]
+            mode_config["benchmark"]["warmup_iterations"] = mode_settings["warmup_iterations"]
 
         if "test_iterations" in mode_settings:
-            mode_config["benchmark"]["test_iterations"] = mode_settings[
-                "test_iterations"
-            ]
+            mode_config["benchmark"]["test_iterations"] = mode_settings["test_iterations"]
 
         if "repeat_runs" in mode_settings:
             mode_config["benchmark"]["repeat_runs"] = mode_settings["repeat_runs"]
@@ -283,14 +277,10 @@ class ConfigLoader:
             mode_config["sequence_lengths"] = mode_settings["sequence_lengths"]
 
         if "num_samples_image" in mode_settings:
-            mode_config["dataset"]["image"]["num_samples"] = mode_settings[
-                "num_samples_image"
-            ]
+            mode_config["dataset"]["image"]["num_samples"] = mode_settings["num_samples_image"]
 
         if "num_samples_text" in mode_settings:
-            mode_config["dataset"]["text"]["num_samples"] = mode_settings[
-                "num_samples_text"
-            ]
+            mode_config["dataset"]["text"]["num_samples"] = mode_settings["num_samples_text"]
 
         return mode_config
 

@@ -6,17 +6,19 @@ ONNX 转换问题诊断脚本
 """
 
 import sys
+
 from packaging import version
 
 
 def check_numpy_compatibility():
     """检查 NumPy 版本和 API 可用性"""
-    print("="*70)
+    print("=" * 70)
     print("NumPy 兼容性检查")
-    print("="*70)
+    print("=" * 70)
 
     try:
         import numpy as np
+
         numpy_version = np.__version__
         print(f"✓ NumPy 已安装: {numpy_version}")
 
@@ -24,13 +26,13 @@ def check_numpy_compatibility():
         v = version.parse(numpy_version)
 
         if v < version.parse("1.20.0"):
-            print(f"  状态: ✅ 旧版本，np.bool 可用")
+            print("  状态: ✅ 旧版本，np.bool 可用")
             status = "old"
         elif v < version.parse("1.24.0"):
-            print(f"  状态: ⚠️  过渡版本，np.bool 已废弃但可用")
+            print("  状态: ⚠️  过渡版本，np.bool 已废弃但可用")
             status = "deprecated"
         else:
-            print(f"  状态: ❌ 新版本，np.bool 已移除")
+            print("  状态: ❌ 新版本，np.bool 已移除")
             status = "removed"
 
         # 测试 np.bool
@@ -41,7 +43,7 @@ def check_numpy_compatibility():
             return True, status
         except AttributeError as e:
             print(f"  ❌ np.bool 不可用: {e}")
-            print(f"  💡 替代方案: 使用 'bool' 或 'np.bool_'")
+            print("  💡 替代方案: 使用 'bool' 或 'np.bool_'")
             return False, status
 
     except ImportError:
@@ -51,12 +53,13 @@ def check_numpy_compatibility():
 
 def check_tf2onnx_compatibility():
     """检查 tf2onnx 版本和兼容性"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("tf2onnx 兼容性检查")
-    print("="*70)
+    print("=" * 70)
 
     try:
         import tf2onnx
+
         tf2onnx_version = tf2onnx.__version__
         print(f"✓ tf2onnx 已安装: {tf2onnx_version}")
 
@@ -64,15 +67,17 @@ def check_tf2onnx_compatibility():
         print("\n测试 tf2onnx.utils 模块:")
         try:
             from tf2onnx.utils import ONNX_TO_NUMPY
-            print(f"  ✅ ONNX_TO_NUMPY 导入成功")
-            print(f"  ✅ tf2onnx 兼容当前 NumPy 版本")
+
+            _ = ONNX_TO_NUMPY
+            print("  ✅ ONNX_TO_NUMPY 导入成功")
+            print("  ✅ tf2onnx 兼容当前 NumPy 版本")
             return True, tf2onnx_version
         except AttributeError as e:
-            print(f"  ❌ ONNX_TO_NUMPY 导入失败")
+            print("  ❌ ONNX_TO_NUMPY 导入失败")
             print(f"  错误: {e}")
-            print(f"\n  💡 解决方案:")
-            print(f"     1. 升级 tf2onnx: pip install tf2onnx --upgrade")
-            print(f"     2. 或降级 NumPy: pip install numpy<1.24")
+            print("\n  💡 解决方案:")
+            print("     1. 升级 tf2onnx: pip install tf2onnx --upgrade")
+            print("     2. 或降级 NumPy: pip install numpy<1.24")
             return False, tf2onnx_version
 
     except ImportError:
@@ -83,12 +88,13 @@ def check_tf2onnx_compatibility():
 
 def check_tensorflow_compatibility():
     """检查 TensorFlow 版本"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("TensorFlow 兼容性检查")
-    print("="*70)
+    print("=" * 70)
 
     try:
         import tensorflow as tf
+
         tf_version = tf.__version__
         print(f"✓ TensorFlow 已安装: {tf_version}")
 
@@ -96,12 +102,13 @@ def check_tensorflow_compatibility():
 
         # TensorFlow 2.20+ 需要 NumPy 1.26+
         if v >= version.parse("2.20.0"):
-            print(f"  ⚠️  TensorFlow 2.20+ 需要 NumPy >= 1.26.0")
+            print("  ⚠️  TensorFlow 2.20+ 需要 NumPy >= 1.26.0")
             import numpy as np
+
             if version.parse(np.__version__) >= version.parse("1.26.0"):
-                print(f"  ✅ NumPy 版本满足要求")
+                print("  ✅ NumPy 版本满足要求")
             else:
-                print(f"  ❌ NumPy 版本过低，可能导致问题")
+                print("  ❌ NumPy 版本过低，可能导致问题")
 
         return True, tf_version
 
@@ -112,18 +119,19 @@ def check_tensorflow_compatibility():
 
 def check_onnxruntime():
     """检查 ONNX Runtime"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("ONNX Runtime 检查")
-    print("="*70)
+    print("=" * 70)
 
     try:
         import onnxruntime as ort
+
         ort_version = ort.__version__
         print(f"✓ ONNX Runtime 已安装: {ort_version}")
 
         # 检查可用的执行提供程序
         providers = ort.get_available_providers()
-        print(f"  可用的执行提供程序:")
+        print("  可用的执行提供程序:")
         for p in providers:
             print(f"    - {p}")
 
@@ -137,11 +145,12 @@ def check_onnxruntime():
 
 def generate_compatibility_matrix():
     """生成兼容性矩阵"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("兼容性矩阵")
-    print("="*70)
+    print("=" * 70)
 
-    print("""
+    print(
+        """
 ┌─────────────────┬──────────────┬─────────────┬──────────────────┐
 │ NumPy 版本      │ np.bool 状态 │ tf2onnx     │ TensorFlow 2.20  │
 ├─────────────────┼──────────────┼─────────────┼──────────────────┤
@@ -155,14 +164,15 @@ def generate_compatibility_matrix():
   ✅ - 完全兼容
   ⚠️  - 有警告但可用
   ❌ - 不兼容
-""")
+"""
+    )
 
 
 def provide_recommendations(numpy_ok, tf2onnx_ok, tf_ok, ort_ok):
     """提供修复建议"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("修复建议")
-    print("="*70)
+    print("=" * 70)
 
     if numpy_ok and tf2onnx_ok and tf_ok and ort_ok:
         print("\n✅ 所有组件兼容，可以正常使用 ONNX 转换！")
@@ -195,9 +205,9 @@ def provide_recommendations(numpy_ok, tf2onnx_ok, tf_ok, ort_ok):
 
 def main():
     """主函数"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("ONNX 转换问题诊断工具")
-    print("="*70)
+    print("=" * 70)
     print()
 
     # 运行检查
@@ -213,11 +223,12 @@ def main():
     provide_recommendations(numpy_ok, tf2onnx_ok, tf_ok, ort_ok)
 
     # 总结
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("诊断总结")
-    print("="*70)
+    print("=" * 70)
 
-    print(f"""
+    print(
+        f"""
 组件状态:
   - NumPy:        {'✅' if numpy_ok else '❌'} ({numpy_status})
   - tf2onnx:      {'✅' if tf2onnx_ok else '❌'} ({tf2onnx_ver})
@@ -225,7 +236,8 @@ def main():
   - ONNX Runtime: {'✅' if ort_ok else '❌'} ({ort_ver})
 
 ONNX 转换: {'✅ 可用' if (numpy_ok and tf2onnx_ok) else '❌ 不可用'}
-""")
+"""
+    )
 
     # 返回状态码
     return 0 if (numpy_ok and tf2onnx_ok) else 1

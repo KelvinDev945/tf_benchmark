@@ -43,8 +43,7 @@ class OpenVINOEngine(BaseInferenceEngine):
         arch = platform.machine()
         if arch != "x86_64":
             raise NotImplementedError(
-                f"OpenVINO is not supported on {arch} architecture. "
-                "Only x86_64 is supported."
+                f"OpenVINO is not supported on {arch} architecture. " "Only x86_64 is supported."
             )
 
         super().__init__(engine_name="openvino", config=config)
@@ -52,12 +51,12 @@ class OpenVINOEngine(BaseInferenceEngine):
         # Import OpenVINO (will fail gracefully if not installed)
         try:
             from openvino.runtime import Core
+
             self.Core = Core
             self.core = Core()
         except ImportError as e:
             raise ImportError(
-                "OpenVINO not installed. Please install with: "
-                "pip install openvino==2023.2.0"
+                "OpenVINO not installed. Please install with: " "pip install openvino==2023.2.0"
             ) from e
 
         self.compiled_model = None
@@ -65,9 +64,7 @@ class OpenVINOEngine(BaseInferenceEngine):
         self.input_keys = None
         self.output_keys = None
 
-    def load_model(
-        self, model_path: str, config: Optional[Dict[str, Any]] = None
-    ) -> None:
+    def load_model(self, model_path: str, config: Optional[Dict[str, Any]] = None) -> None:
         """
         Load an OpenVINO IR model.
 
@@ -101,9 +98,7 @@ class OpenVINOEngine(BaseInferenceEngine):
             print(f"✓ Precision: {precision}")
 
             # Compile model for CPU
-            self.compiled_model = self.core.compile_model(
-                model, "CPU", device_config
-            )
+            self.compiled_model = self.core.compile_model(model, "CPU", device_config)
 
             # Create infer request
             self.infer_request = self.compiled_model.create_infer_request()
@@ -241,19 +236,23 @@ class OpenVINOEngine(BaseInferenceEngine):
             # Add input/output details
             inputs_info = []
             for inp in self.compiled_model.inputs:
-                inputs_info.append({
-                    "name": inp.any_name,
-                    "shape": list(inp.shape),
-                    "type": str(inp.element_type),
-                })
+                inputs_info.append(
+                    {
+                        "name": inp.any_name,
+                        "shape": list(inp.shape),
+                        "type": str(inp.element_type),
+                    }
+                )
 
             outputs_info = []
             for out in self.compiled_model.outputs:
-                outputs_info.append({
-                    "name": out.any_name,
-                    "shape": list(out.shape),
-                    "type": str(out.element_type),
-                })
+                outputs_info.append(
+                    {
+                        "name": out.any_name,
+                        "shape": list(out.shape),
+                        "type": str(out.element_type),
+                    }
+                )
 
             info["inputs"] = inputs_info
             info["outputs"] = outputs_info
@@ -299,9 +298,7 @@ class OpenVINOEngine(BaseInferenceEngine):
                     concrete_shape.append(dim)
 
             # Create random data
-            dummy_input[inp.any_name] = np.random.randn(*concrete_shape).astype(
-                np.float32
-            )
+            dummy_input[inp.any_name] = np.random.randn(*concrete_shape).astype(np.float32)
 
         return dummy_input
 
@@ -328,9 +325,7 @@ def create_openvino_engine(precision: str = "fp32") -> OpenVINOEngine:
 
     if precision not in valid_precisions:
         available = ", ".join(valid_precisions)
-        raise ValueError(
-            f"Unknown precision '{precision}'. Available: {available}"
-        )
+        raise ValueError(f"Unknown precision '{precision}'. Available: {available}")
 
     config = {
         "precision": precision,

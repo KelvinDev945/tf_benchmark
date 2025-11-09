@@ -91,7 +91,7 @@ class TensorFlowEngine(BaseInferenceEngine):
                     # Try to load as Keras model
                     self.model = tf.keras.models.load_model(model_path)
                     print(f"✓ Loaded Keras model from {model_path}")
-            elif hasattr(model_path, '__call__') and hasattr(model_path, 'predict'):
+            elif hasattr(model_path, "__call__") and hasattr(model_path, "predict"):
                 # Model object passed directly (Keras or HuggingFace Transformers)
                 # Accept any callable TensorFlow model with predict method
                 self.model = model_path
@@ -129,9 +129,7 @@ class TensorFlowEngine(BaseInferenceEngine):
 
         # Use more iterations for XLA (requires compilation time)
         if self.config.get("xla", False) and num_iterations < 50:
-            print(
-                f"⚠ XLA enabled: increasing warmup iterations from {num_iterations} to 50"
-            )
+            print(f"⚠ XLA enabled: increasing warmup iterations from {num_iterations} to 50")
             num_iterations = 50
 
         try:
@@ -291,9 +289,7 @@ class TensorFlowEngine(BaseInferenceEngine):
             for name, shape in input_shape.items():
                 # Remove None dimensions and use batch size 1
                 concrete_shape = tuple(1 if s is None else s for s in shape)
-                dummy_input[name] = np.random.randn(*concrete_shape).astype(
-                    np.float32
-                )
+                dummy_input[name] = np.random.randn(*concrete_shape).astype(np.float32)
             return dummy_input
         else:
             # Single input
@@ -355,8 +351,6 @@ def create_tensorflow_engine(config_name: str) -> TensorFlowEngine:
 
     if config_name not in configs:
         available = ", ".join(configs.keys())
-        raise ValueError(
-            f"Unknown config '{config_name}'. Available: {available}"
-        )
+        raise ValueError(f"Unknown config '{config_name}'. Available: {available}")
 
     return TensorFlowEngine(config=configs[config_name])

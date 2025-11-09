@@ -5,10 +5,11 @@ Note: These tests may download pretrained models.
 Use mock data where possible to speed up tests.
 """
 
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pytest
 import tensorflow as tf
-from unittest.mock import MagicMock, patch
 
 
 class TestModelLoader:
@@ -84,9 +85,7 @@ class TestModelLoader:
         """Test creating dummy input for image models."""
         from src.models import ModelLoader
 
-        dummy_input = ModelLoader.create_dummy_input(
-            "mobilenet_v2", "image", batch_size=4
-        )
+        dummy_input = ModelLoader.create_dummy_input("mobilenet_v2", "image", batch_size=4)
 
         assert isinstance(dummy_input, np.ndarray)
         assert dummy_input.shape == (4, 224, 224, 3)
@@ -96,9 +95,7 @@ class TestModelLoader:
         """Test creating dummy input for text models."""
         from src.models import ModelLoader
 
-        dummy_input = ModelLoader.create_dummy_input(
-            "bert-base-uncased", "text", batch_size=4
-        )
+        dummy_input = ModelLoader.create_dummy_input("bert-base-uncased", "text", batch_size=4)
 
         assert isinstance(dummy_input, dict)
         assert "input_ids" in dummy_input
@@ -150,9 +147,7 @@ class TestModelLoader:
         sample_input = np.random.rand(1, 10).astype(np.float32)
 
         # Verify
-        result = ModelLoader.verify_model(
-            model, sample_input, expected_output_shape=(1, 2)
-        )
+        result = ModelLoader.verify_model(model, sample_input, expected_output_shape=(1, 2))
 
         assert result is True
 
@@ -172,9 +167,7 @@ class TestModelLoader:
         sample_input = np.random.rand(1, 10).astype(np.float32)
 
         # Verify with wrong expected shape
-        result = ModelLoader.verify_model(
-            model, sample_input, expected_output_shape=(1, 5)
-        )
+        result = ModelLoader.verify_model(model, sample_input, expected_output_shape=(1, 5))
 
         assert result is False
 
