@@ -2,22 +2,14 @@
 # Python Dependencies
 
 # Core Deep Learning Frameworks
-tensorflow==2.20.0
+tensorflow==2.15.0
 tensorflow-hub>=0.16.0
-tf-keras>=2.20.0
+tf-keras>=2.15.0
 
 # ONNX and ONNX Runtime
 onnx>=1.15.0
 onnxruntime>=1.16.0
-# tf2onnx>=1.16.0  # Incompatible: requires protobuf<4.0, conflicts with TF 2.20's protobuf>=5.28
-optimum[onnxruntime]>=1.16.0  # HuggingFace Optimum for ONNX conversion (no protobuf conflict)
-
-# HuggingFace Libraries (NOT REQUIRED - removed)
-# This project does not require HuggingFace libraries
-# The TensorFlow Engine supports any callable model with predict method
-# transformers>=4.35.0
-# datasets>=2.15.0
-# tokenizers>=0.15.0
+optimum[onnxruntime]>=1.16.0  # HuggingFace Optimum for ONNX conversion
 
 # OpenVINO (installed conditionally in Dockerfile for x86_64 only)
 # openvino==2023.2.0
@@ -25,69 +17,32 @@ optimum[onnxruntime]>=1.16.0  # HuggingFace Optimum for ONNX conversion (no prot
 
 # Numerical Computing
 numpy>=1.24.0,<2.0  # Pin to 1.x for ONNX tooling compatibility
-scipy>=1.11.0
+scipy>=1.11.0  # Used by metrics.py for statistical analysis
 
 # Data Processing and Analysis
 pandas>=2.0.0
-scikit-learn>=1.3.0
 
 # Visualization
 matplotlib>=3.7.0
 seaborn>=0.12.0
-plotly>=5.18.0
-# kaleido>=0.2.1  # Not used in codebase (plotly static export)
 
 # Configuration Management
 pyyaml>=6.0
-python-dotenv>=1.0.0
 
 # System Monitoring
 psutil>=5.9.0
-py-cpuinfo>=9.0.0
 
-# Progress Bars and CLI
-tqdm>=4.66.0
+# CLI
 click>=8.1.0
-rich>=13.7.0
-
-# Templating (for report generation)
-jinja2>=3.1.0
-
-# Testing
-pytest>=7.4.0
-pytest-cov>=4.1.0
-pytest-xdist>=3.5.0
-
-# Type Checking
-mypy>=1.7.0
-types-PyYAML>=6.0.0
-
-# Code Quality
-black>=23.12.0
-flake8>=6.1.0
-isort>=5.13.0
-
-# Logging
-coloredlogs>=15.0.1
-python-json-logger>=2.0.7
 
 # Utilities
 pillow>=10.1.0
-requests>=2.31.0
-urllib3>=2.1.0
 
-# Model Quantization Tools
-tensorflow-model-optimization>=0.7.5
-
-# Additional ONNX Tools (removed unused packages)
-# onnx-simplifier>=0.4.35  # Not used in codebase
-# onnxoptimizer>=0.3.13    # Not used in codebase
-
-# HDF5 Support
+# HDF5 Support (required for TensorFlow model saving)
 h5py>=3.10.0
 
-# Protobuf (compatible version for TensorFlow)
-protobuf>=5.28.0
+# Protobuf (compatible version for TensorFlow 2.15)
+protobuf>=3.20.0,<5.0
 
-# Network Analysis (optional)
-# networkx>=3.2.0  # Not used in codebase
+# Testing
+pytest>=7.4.0
