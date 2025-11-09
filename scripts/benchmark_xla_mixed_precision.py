@@ -52,11 +52,91 @@ def check_environment():
     }
 
 
+def create_bert_lite_model(seq_length=128, vocab_size=10000, hidden_size=256,
+                            num_hidden_layers=4, num_attention_heads=4):
+    """创建BERT-Lite模型"""
+    print_section("创建BERT-Lite模型")
+    print(f"配置:")
+    print(f"  序列长度: {seq_length}")
+    print(f"  词汇表大小: {vocab_size}")
+    print(f"  隐藏层大小: {hidden_size}")
+    print(f"  Transformer层数: {num_hidden_layers}")
+    print(f"  注意力头数: {num_attention_heads}")
+
+    intermediate_size = hidden_size * 4
+
+    # 输入层
+    input_ids = tf.keras.layers.Input(shape=(seq_length,), dtype=tf.int32, name='input_ids')
+
+    # Embedding层
+    embeddings = tf.keras.layers.Embedding(
+        vocab_size, hidden_size, name='embedding'
+    )(input_ids)
+
+    # Position Embedding
+    position_embeddings = tf.keras.layers.Embedding(
+        seq_length, hidden_size, name='position_embedding'
+    )(tf.range(seq_length))
+
+    # 合并embeddings
+    x = embeddings + position_embeddings
+    x = tf.keras.layers.LayerNormalization(epsilon=1e-12)(x)
+    x = tf.keras.layers.Dropout(0.1)(x)
+
+    # Transformer Encoder 层
+    for i in range(num_hidden_layers):
+        # Multi-Head Attention
+        attention_output = tf.keras.layers.MultiHeadAttention(
+            num_heads=num_attention_heads,
+            key_dim=hidden_size // num_attention_heads,
+            name=f'attention_{i}'
+        )(x, x)
+
+        attention_output = tf.keras.layers.Dropout(0.1)(attention_output)
+        x = tf.keras.layers.LayerNormalization(epsilon=1e-12)(x + attention_output)
+
+        # Feed Forward Network (使用ReLU)
+        ffn = tf.keras.Sequential([
+            tf.keras.layers.Dense(intermediate_size, activation='relu'),
+            tf.keras.layers.Dense(hidden_size)
+        ], name=f'ffn_{i}')
+
+        ffn_output = ffn(x)
+        ffn_output = tf.keras.layers.Dropout(0.1)(ffn_output)
+        x = tf.keras.layers.LayerNormalization(epsilon=1e-12)(x + ffn_output)
+
+    # Pooler
+    pooled_output = tf.keras.layers.Lambda(lambda x: x[:, 0])(x)
+    pooled_output = tf.keras.layers.Dense(
+        hidden_size, activation='tanh', name='pooler'
+    )(pooled_output)
+
+    # 分类头
+    output = tf.keras.layers.Dense(2, activation='softmax', name='classifier')(pooled_output)
+
+    model = tf.keras.Model(inputs=input_ids, outputs=output, name='bert_lite_model')
+
+    print(f"\n✓ BERT-Lite模型创建完成")
+    print(f"  总参数: {model.count_params():,}")
+
+    return model
+
+
 def create_test_model(model_type="cnn", input_shape=(28, 28, 1), num_classes=10):
     """创建测试模型"""
     print_section(f"创建测试模型: {model_type}")
 
-    if model_type == "cnn":
+    if model_type == "bert_lite":
+        # BERT模型使用不同的参数
+        return create_bert_lite_model(
+            seq_length=128,
+            vocab_size=10000,
+            hidden_size=256,
+            num_hidden_layers=4,
+            num_attention_heads=4
+        )
+
+    elif model_type == "cnn":
         model = tf.keras.Sequential([
             tf.keras.layers.Input(shape=input_shape),
             tf.keras.layers.Conv2D(32, 3, activation='relu'),
@@ -115,19 +195,32 @@ def create_test_model(model_type="cnn", input_shape=(28, 28, 1), num_classes=10)
     return model
 
 
-def prepare_test_data(input_shape, num_samples=1000, num_classes=10):
+def prepare_test_data(input_shape, num_samples=1000, num_classes=10, is_bert=False):
     """准备测试数据"""
     print_section("准备测试数据")
 
-    # 生成随机测试数据
-    X_test = np.random.randn(num_samples, *input_shape).astype(np.float32)
-    y_test = np.random.randint(0, num_classes, num_samples)
-    y_test_onehot = tf.keras.utils.to_categorical(y_test, num_classes)
+    if is_bert:
+        # BERT模型使用整数token序列
+        seq_length = input_shape[0] if isinstance(input_shape, tuple) else input_shape
+        X_test = np.random.randint(0, 10000, size=(num_samples, seq_length), dtype=np.int32)
+        y_test = np.random.randint(0, num_classes, num_samples)
+        y_test_onehot = tf.keras.utils.to_categorical(y_test, num_classes)
 
-    print(f"✓ 测试数据准备完成")
-    print(f"  样本数: {num_samples}")
-    print(f"  输入形状: {X_test.shape}")
-    print(f"  类别数: {num_classes}")
+        print(f"✓ BERT测试数据准备完成")
+        print(f"  样本数: {num_samples}")
+        print(f"  序列长度: {seq_length}")
+        print(f"  输入形状: {X_test.shape}")
+        print(f"  类别数: {num_classes}")
+    else:
+        # CNN等模型使用浮点数数据
+        X_test = np.random.randn(num_samples, *input_shape).astype(np.float32)
+        y_test = np.random.randint(0, num_classes, num_samples)
+        y_test_onehot = tf.keras.utils.to_categorical(y_test, num_classes)
+
+        print(f"✓ 测试数据准备完成")
+        print(f"  样本数: {num_samples}")
+        print(f"  输入形状: {X_test.shape}")
+        print(f"  类别数: {num_classes}")
 
     return X_test, y_test, y_test_onehot
 
@@ -466,7 +559,7 @@ def generate_report(env_info, model_info, baseline_results, xla_results,
 
 def main():
     parser = argparse.ArgumentParser(description="TensorFlow XLA + 混合精度性能测试")
-    parser.add_argument("--model-type", default="cnn", choices=["cnn", "resnet_like"],
+    parser.add_argument("--model-type", default="cnn", choices=["cnn", "resnet_like", "bert_lite"],
                        help="模型类型")
     parser.add_argument("--output-dir", default="results/xla_mixed_precision",
                        help="输出目录")
@@ -487,21 +580,40 @@ def main():
     # 环境检查
     env_info = check_environment()
 
-    # 创建模型
-    input_shape = (28, 28, 1)
-    num_classes = 10
-    model = create_test_model(args.model_type, input_shape, num_classes)
+    # 根据模型类型设置参数
+    is_bert_model = (args.model_type == "bert_lite")
 
-    model_info = {
-        "模型类型": args.model_type,
-        "输入形状": str(input_shape),
-        "类别数": num_classes,
-        "参数总数": f"{model.count_params():,}"
-    }
+    if is_bert_model:
+        # BERT模型参数
+        input_shape = 128  # 序列长度
+        num_classes = 2    # 二分类
+        model = create_test_model(args.model_type, input_shape, num_classes)
+
+        model_info = {
+            "模型类型": "BERT-Lite",
+            "序列长度": 128,
+            "隐藏层大小": 256,
+            "Transformer层数": 4,
+            "注意力头数": 4,
+            "类别数": num_classes,
+            "参数总数": f"{model.count_params():,}"
+        }
+    else:
+        # CNN/ResNet模型参数
+        input_shape = (28, 28, 1)
+        num_classes = 10
+        model = create_test_model(args.model_type, input_shape, num_classes)
+
+        model_info = {
+            "模型类型": args.model_type,
+            "输入形状": str(input_shape),
+            "类别数": num_classes,
+            "参数总数": f"{model.count_params():,}"
+        }
 
     # 准备测试数据
     X_test, y_test, y_test_onehot = prepare_test_data(
-        input_shape, args.num_samples, num_classes
+        input_shape, args.num_samples, num_classes, is_bert=is_bert_model
     )
 
     # 测试1: Baseline (FP32, 无XLA)
